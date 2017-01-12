@@ -1,5 +1,6 @@
 '''This script provides a way to visualize the results and input to the `bins` and `crosspoints` scripts. It can accept three filetypes (SNP input TSV, crosspoint script output CSV, and bin script output CSV). It then parses the files and groups the data by RIL, creating an image for each. In each colored row of the resulting images, regions are colored red, green, or blue, for genotype a, heterozygous, or genotype b, respecively. The binamp is represented in gray with adjacent bins alternating dark and light. The script can accept any combination or number of files for each of the different types.'''
 import sys
+import os
 from collections import OrderedDict
 import math
 import numpy as np
@@ -20,10 +21,9 @@ def run(snp_path,crosspoint_path,binned_path,out_folder):
     auto_set_columns = False
     min_columns = 500
 
-    #load all data from all files
     if snp_path:
         for file_path in snp_path:
-            name = "SNPs:%s" % (file_path.strip().split("/")[-1])
+            name = "SNPs: %s" % (file_path.strip().split("/")[-1])
             snp_data[name] = OrderedDict()
             with open(file_path) as snp_file:
                 indv_names = snp_file.readline().strip().split("\t")[2:]
@@ -37,7 +37,7 @@ def run(snp_path,crosspoint_path,binned_path,out_folder):
                         if maxi>maximum_index:maximum_index=maxi
     if crosspoint_path:
         for file_path in crosspoint_path:
-            name = "CPs:%s" % (file_path.strip().split("/")[-1])
+            name = "CPs: %s" % (file_path.strip().split("/")[-1])
             crosspoint_data[name] = {"indvs":OrderedDict(),"min_size":None}
             with open(file_path) as crosspoint_file:
                 for line in crosspoint_file:
@@ -50,7 +50,7 @@ def run(snp_path,crosspoint_path,binned_path,out_folder):
                     if crosspoints[-1]>maximum_index:maximum_index=crosspoints[-1]
     if binned_path:
         for file_path in binned_path:
-            name = "BINs:%s" % (file_path.strip().split("/")[-1])
+            name = "BINs: %s" % (file_path.strip().split("/")[-1])
             binned_data[name] = {"indvs":OrderedDict(),"bin_bounds":None,"min_bin_size":None}
             with open(file_path) as bin_file:
                 line = bin_file.readline()
@@ -76,7 +76,6 @@ def run(snp_path,crosspoint_path,binned_path,out_folder):
                             only_cp+=all_bins[i-1:i+1]
                     only_cp.append(all_bins[-1])
                     binned_data[name]["indvs"][indv] = {"list":only_cp}
-    #normalize and create column color information
     column_size = (maximum_index)/float(columns-1)
     if auto_set_columns:
         if len(binned_data)>0:
@@ -93,13 +92,11 @@ def run(snp_path,crosspoint_path,binned_path,out_folder):
             snp_data[name][indv]["dict"] = {}
             for snp in snp_data[name][indv]["list"]:
                 col = int(math.floor(snp[0]/column_size))
-                # print snp[0],column_size,snp[0]/column_size
                 if snp[1] in genotype_values:
                     if not col in snp_data[name][indv]["dict"]:
                         snp_data[name][indv]["dict"][col] = []
                     snp_data[name][indv]["dict"][col].append(snp[1])
             snp_data[name][indv]["col_vals"] = [None]*columns
-            # print len(snp_data[name][indv]["col_vals"])
             for col in snp_data[name][indv]["dict"]:
                 snp_data[name][indv]["col_vals"][col] = sum(genotype_values[x] for x in snp_data[name][indv]["dict"][col])/float(len(snp_data[name][indv]["dict"][col]))
     for cp_data_set in (crosspoint_data,binned_data):
@@ -128,7 +125,6 @@ def run(snp_path,crosspoint_path,binned_path,out_folder):
         for i in range(1,len(binned_data[name]["bin_bounds"])):
             binned_data[name]["bin_col_vals"][binned_data[name]["bin_bounds"][i-1]:binned_data[name]["bin_bounds"][i]] = [3+color_alt]*(binned_data[name]["bin_bounds"][i]-binned_data[name]["bin_bounds"][i-1])
             color_alt *= -1
-    #sort by individual
     individuals = OrderedDict()
     for name in snp_data:
         for indv in snp_data[name]:
@@ -142,7 +138,7 @@ def run(snp_path,crosspoint_path,binned_path,out_folder):
     for name in binned_data:
         for indv in individuals:
             if not indv in individuals: individuals[indv] = {"SNP_rows":{},"CP_rows":{},"BIN_rows":{},"BIN_maps":{}}
-            individuals[indv]["BIN_maps"][name+"(binmap)"] =binned_data[name]["bin_col_vals"]
+            individuals[indv]["BIN_maps"][name+" (binmap)"] =binned_data[name]["bin_col_vals"]
     image_builders = []
     row_order = [item.split("/")[-1] for item in sys.argv[2:] if not item.startswith("-")]
     for indv in individuals:
@@ -156,7 +152,7 @@ def run(snp_path,crosspoint_path,binned_path,out_folder):
             row_list.append((name,individuals[indv]["BIN_rows"][name]))
         for name in individuals[indv]["BIN_maps"]:
             row_list.append((name,individuals[indv]["BIN_maps"][name]))
-        row_list.sort(key=lambda row:next((i for i, x in enumerate(row_order) if  row[0].split(":",1)[-1].startswith(x)), -1))
+        row_list.sort(key=lambda row:next((i for i, x in enumerate(row_order) if  row[0].split(":",1)[-1].strip().startswith(x)), -1))
 
         builder = Indvidual_image_builder(indv)
         for row in row_list:
@@ -192,7 +188,6 @@ def val_to_color(val):
     return rgba_hex_val(*(genotype_colors["no_data"]))
 
 class Indvidual_image_builder(object):
-    """docstring for Indvidual_image_builder"""
     title_height = 25
     padding = 1
     def __init__(self, name):
@@ -222,20 +217,20 @@ class Indvidual_image_builder(object):
                 line[:] = self.row_list[row_name]
         pil_im = Image.frombuffer('RGBA',(w,h),img,'raw','RGBA',0,1)
         draw = ImageDraw.Draw(pil_im)
-        font = ImageFont.load_default()
+        font = ImageFont.truetype(os.path.join(os.path.dirname(__file__), "package_data/Tuffy.ttf"),size=14)
         for rn_i,row_name in enumerate(self.row_list):
             binned_label_middle = (rn_i+0.5)*section_height
-            lw,lh = draw.textsize(row_name)
+            lw,lh = font.getsize(row_name)
             binned_label_top = binned_label_middle - lh//2
             binned_label_bottom = binned_label_top + lh
             binned_label_left = self.length//2 - lw//2
             binned_label_right = binned_label_left + lw
             text_loc = (self.length//2-lw//2,(binned_label_middle-lh//2))
-            box_bounds = ((binned_label_left-1,binned_label_top),(binned_label_right,binned_label_bottom))
+            box_bounds = ((binned_label_left-3,binned_label_top),(binned_label_right+2,binned_label_bottom))
             draw.rectangle(box_bounds, fill=(255,255,255))
             draw.text(text_loc, row_name, (0,0,0),font=font)
 
-        tw,th = draw.textsize(self.name)
+        tw,th = font.getsize(self.name)
         draw.rectangle(((0,h-self.title_height),(w,h)), fill=(0,0,0))
         draw.text((self.length//2-tw//2,(h-(self.title_height//2)-th//2)), self.name, (255,255,255),font=font)
 
