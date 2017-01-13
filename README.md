@@ -7,34 +7,34 @@ _The only non-standard dependency of SNPbinner is [Pillow](https://github.com/py
 To install the SNPbinner utility, download or clone the repository and run `$pip install repo_folder/`. **Alternitively, one can call the program with `$python2.7 repo_folder/snpbinner` instead of `$snpbinner`  which does not require installation.**
 
 ##Crosspoints
-`crosspoints` uses genotyped SNP data to identify likely crossover points. First, the script uses a pair of hidden Markov models (HMM) to predict genotype regions along the chromosome both with (3-state) and without (2-state) heterozygous regions. Then, the script identifies grouping of regions which are too short (based on a minimum distance between crosspoints set by the user). After that it follows the rules below to find reasonable crosspoints.
+`crosspoints` uses genotyped SNP data to identify likely crossover points. First, the script uses a pair of hidden Markov models (HMM) to predict genotype regions along the chromosome both with (3-state) and without (2-state) heterozygous regions. Then, the script identifies groupings of regions which are too short (based on a minimum distance between crosspoints set by the user). After that it follows the rules below to find crosspoints. The script then outputs the crosspoints for each RIL and the genoytped regions between them to a CSV file.
+
+#####Rules:
 
 1. If a group of too-short regions is long enough to be its own acceptably-long genotype region, it will be treated as such and assigned the most likely genotype using the 3-state HMM.
 ![](README_images/crosspoint_selection-04.png)
 1. If a group of too-short regions is surrounded by regions of the same genotype, all regions within that group are assigned the surrounding genotype.
 ![](README_images/crosspoint_selection-03.png)
-1. If a too-short region has been genotyped as heterozygous by the 3-state HMM, that section is replace by the regions identified by the 2-sate HMM. 
+1. If a too-short region has been genotyped as heterozygous by the 3-state HMM, that section is replaced by the regions identified by the 2-sate HMM. 
 ![](README_images/crosspoint_selection-05.png)
-2. If the first or last too-short region is neighboring an acceptably-long heterozygous region, it will be assigned the heterozygous genotype. 
+2. If the first or last too-short region is neighboring an acceptably-long heterozygous region, the whole grouping will be assigned the heterozygous genotype. 
 ![](README_images/crosspoint_selection-02.png)
-3. If neither the first or last too-short region is neighboring a heterozygous or same-genotype region, the shortest of those two regions will be assigned to the same genotype as the acceptably-long region neighboring it. Repeat until the group is empty.
+3. If neither the first or last too-short region is neighboring a heterozygous region, the shortest of those two regions will be assigned to the same genotype as its neighbor. This repeats until the group is empty.
 ![](README_images/crosspoint_selection-01.png)
-
-The script then outputs the crosspoints for each RIL and the genoytped regions between them to a CSV file.
 
 ###To Run:
 
 ```$snpbinner crosspoints -i INPUT_FILE (-m MIN_LENGTH | -r MIN_RATIO) -o OUTPUT_FILE [OPTIONAL ARGUEMENTS]```  
 
 `INPUT_FILE`: Path to a SNP TSV of the format described below.  
-`MIN_LENGTH`: Minimum distance between crosspoints in basepairs.  
-`MIN_RATIO `: Minimum distance between crosspoints in as a ratio. (0.01 would be 1% of the chromosome)  
-`OUTPUT_FILE `: Output filename.  
+`MIN_LENGTH`: Minimum distance between crosspoints in basepairs. (Can't use with `MIN_RATIO`)  
+`MIN_RATIO`: Minimum distance between crosspoints in as a ratio (0.01 would be 1% of the chromosome.) (Can't use with `MIN_LENGTH `)  
+`OUTPUT_FILE `: Path for the output CSV.  
 
-Optional Arguments:  
-`-p PREDICTED_HOMOGENEITY` ideal homogenous percentage of homogenous regions, used to calculate emmision probability (default = 0.9)  
-`-c PREDICTED_CROSSOVERS` used to calculate transition probability (default = 4)  
-`-l CHROM_LENGTH` The length of the chromosome/scaffold which the SNPs are on. If no length is provided, the last SNP is considered to be the last site on the chromosome.
+Optional Arguments:
+`-l CHROM_LENGTH` The length of the chromosome/scaffold which the SNPs are on. If no length is provided, the last SNP is considered to be the last site on the chromosome.  
+`-p PREDICTED_HOMOGENEITY` Used to calculate emmision probabilities. For example, if 0.9 is used, it is predicted that a region genotyped as _b_ would contain 90% _b_-genotyped SNPs. (default = 0.9)  
+`-c PREDICTED_CROSSOVERS` Used to calculate transition probability. The state transition probability is this value divided by the chromosome length. (default = 4)
 
 ###Input Format:
 **[Sample input file]()**
