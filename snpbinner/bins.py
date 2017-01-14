@@ -6,10 +6,10 @@ import math
 def parser(parser_add_func,name):
     '''Sets up an arguement parser for this module. Note the arguement names match those in the `run` function.'''
     p = parser_add_func(name,description=__doc__)
-    p.add_argument("-i","--input_path", required=True, help="Path to a crosspoint file.")
-    p.add_argument("-o","--output_path",required=True, help="Output path for resulting CSV file.")
-    p.add_argument("-l","--min_bin_size", required=True, type=int, help="Minimum size (in bp) for bins.")
-    p.add_argument("-n","--binmap_id", default=False, type=str,help="If provided, A header row will be added and each column labeled with the given ID string.")
+    p.add_argument("-i","--input",        metavar="PATH",  dest='input_file',   required=True,           help="Path to a crosspoints CSV.")
+    p.add_argument("-o","--output",       metavar="PATH",  dest='output_file',  required=True,           help="Path for the output CSV.")
+    p.add_argument("-l","--min-bin-size", metavar="INT",   dest='min_bin_size', required=True, type=int, help="Minimum size of a bin in basepairs. This defines the resolution of the binmap.")
+    p.add_argument("-n","--binmap-id",    metavar="ID",    dest="binmap_id",    default=False, type=str, help="If a binmap ID is provided, a header row will be added and each column labeled with the given string.")
     return p
 
 def run(input_path,output_path,min_bin_size,binmap_id):
@@ -97,7 +97,7 @@ def run(input_path,output_path,min_bin_size,binmap_id):
             km_points = [int((j*start_cp_dist)+group[0]+start_offset) for j in range(cp_count)]
             km_groups = [[] for k in range(len(km_points))]
 
-            #assign each cp to the closest centroid, we are working in one dimension, so this can be done linearly (hence the while loop)
+            #assign each cp to the closest centroid, we are working in one dimension, so this can be done linearly (hence the upcoming while loop)
             nearest = 0
             for cp in group:
                 while nearest+1<len(km_points) and abs(cp-km_points[nearest+1]) < abs(cp-km_points[nearest]):

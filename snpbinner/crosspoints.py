@@ -1,20 +1,22 @@
-'''This script uses a hidden markov model to identify the most likely crosspoints on a single chromosome given genotyped SNPs along that sequence. A description of the input format can be found in the README. One must also provide a minimum distance between crosspoints. The script uses a greedy algorithm which "eats in" from the sides of groupings of too-short state regions in order to find reasonable crosspoints (following the rules described in the README).'''
+'''Uses genotyped SNP data to identify likely crossover points. (See README for more information)'''
 from math import log
 
 def parser(parser_add_func,name):
-    '''Sets up an arguement parser for this module. Note the arguement names match those in the `run` function.'''
+    '''Sets up an arguement parser for this module. Note the `dest` values match the arguements in the `run` function.'''
     p = parser_add_func(name,description="")
-    p.add_argument("-i","--input_file", required=True,help="input file of snps")
-    p.add_argument("-p","--predicted_state_homogeneity", type=float, default=0.90,help="ideal homogenous percentage of homogenous regions, used to calculate emmision probability (0.90 works well and probably doesnt need to change)")
-    p.add_argument("-c","--predicted_crossover_count", type=float, default=4,help="used to calculate transition probability (10 works well but could be changed to be lower if too many crosspoints are made)")
-    p.add_argument("-l","--chrom_len", type=int, default=0,help="The length of the chromosome/scaffold which the SNPs are on. If no length is provided, the last SNP is considered to be the last location on the chromosome.")
+    #required
+    p.add_argument("-i","--input",       metavar="PATH",  dest='input_file',                           required=True, help="Path to a SNP TSV.")
+    p.add_argument("-o","--output",      metavar="PATH",  dest='output_file',                          required=True, help="Path for the output CSV.")
     g = p.add_mutually_exclusive_group(required=True)
-    g.add_argument("-m","--min_state_length", type=int,help="Minimum distance between two crosspoints in bp, cannot be used with min_state_ratio")
-    g.add_argument("-r","--min_state_ratio", type=float,help="Minimum distance between two crosspoints in percent of total length, cannot be used with min_state_length")
-    p.add_argument("-o","--output_file",required=True,help="output file for crosspoints (will be overwritten, directory must exist)")
+    g.add_argument("-m","--min-length",  metavar="INT",   dest='min_state_length',      type=int,                     help="Minimum distance between crosspoints in basepairs. Cannot be used with `min-ratio`.")
+    g.add_argument("-r","--min-ratio",   metavar="FLOAT", dest='min_state_ratio',       type=float,                   help="Minimum distance between crosspoints as a ratio. (0.01 would be 1%% of the chromosome.) Cannot be used with `min-length`.")
+    #optional
+    p.add_argument("-c","--cross-count", metavar="FLOAT", dest='predicted_cross_count', type=float,    default=4,     help="Used to calculate transition probability. The state transition probability is this value divided by the chromosome length. (default = 4)")
+    p.add_argument("-l","--chrom-len",   metavar="INT",   dest='chrom_len',             type=int,      default=0,     help="The length of the chromosome/scaffold which the SNPs are on. If no length is provided, the last SNP is considered to be the last site on the chromosome.")
+    p.add_argument("-p","--homogeneity", metavar="FLOAT", dest='predicted_homogeneity', type=float,    default=0.9,   help="Used to calculate emmision probabilities. For example, if 0.9 is used, it is predicted that a region genotyped as b would contain 90%% b-genotyped SNPs. (default = 0.9)")
     return p
 
-def run(input_file,output_file,predicted_state_homogeneity,predicted_crossover_count,chrom_len,min_state_length=None,min_state_ratio=None):
+def run(input_file,output_file,predicted_homogeneity,predicted_cross_count,chrom_len,min_state_length=None,min_state_ratio=None):
     '''Runs the module'''
 
     #get file statistics
@@ -31,8 +33,8 @@ def run(input_file,output_file,predicted_state_homogeneity,predicted_crossover_c
         pass
 
     # contruct the Hidden Markov Models (HMM) used to predict states
-    crosspoint_probability = predicted_crossover_count/float(chrom_len)
-    intra_p = predicted_state_homogeneity # emmision probability of the genotype corresponding to the state
+    crosspoint_probability = predicted_cross_count/float(chrom_len)
+    intra_p = predicted_homogeneity # emmision probability of the genotype corresponding to the state
     inter_p = 1-intra_p                   # emmision probability of the opposite genotype
 
     # create a HMM that registers heterogeneous regions
