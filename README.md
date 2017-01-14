@@ -60,19 +60,19 @@ $ snpbinner crosspoints --input PATH --output PATH (--min-length INT | --min-rat
 ``` 
 
 #####Required Arguments
-|Argument|Description|
-|:-:|:--|
-|`-i, --input PATH`| Path to a SNP TSV.|
-|`-o, --output PATH`| Path for the output CSV.|
-|`-m, --min-length INT`| Minimum distance between crosspoints in basepairs. Cannot be used with `min-ratio`.|
-|`-r, --min-ratio FLOAT`| Minimum distance between crosspoints as a ratio. (0.01 would be 1% of the chromosome.) Cannot be used with `min-length`.|
+|||Type|Description|
+|:-:|:-:|:-:|:--|
+|`-i`|`--input`|`PATH`| Path to a SNP TSV.|
+|`-o`|`--output`|`PATH`| Path for the output CSV.|
+|`-m`|`--min-length`|`INT`| Minimum distance between crosspoints in basepairs. Cannot be used with `min-ratio`.|
+|`-r`|`--min-ratio`|`FLOAT`| Minimum distance between crosspoints as a ratio. (0.01 would be 1% of the chromosome.) Cannot be used with `min-length`.|
 
 #####Optional Arguments
-|Argument|Description|
-|:-:|:--|
-|`-c, --cross-count FLOAT`| Used to calculate transition probability. The state transition probability is this value divided by the chromosome length. (default: 4)|
-|`-l, --chrom-len INT`| The length of the chromosome/scaffold which the SNPs are on. If no length is provided the last SNP is considered to be the last site on the chromosome.|
-|`-p, --homogeneity FLOAT`| Used to calculate emission probabilities. For example if 0.9 is used it is predicted that a region b-genotype would contain 90% b-genotype. (Default: 0.9)|
+|||Type|Description|
+|:-:|:-:|:-:|:--|
+|`-c`|`--cross-count`|`FLOAT`| Used to calculate transition probability. The state transition probability is this value divided by the chromosome length. (default: 4)|
+|`-l`|`--chrom-len`|`INT`| The length of the chromosome/scaffold which the SNPs are on. If no length is provided the last SNP is considered to be the last site on the chromosome.|
+|`-p`|`--homogeneity`|`FLOAT`| Used to calculate emission probabilities. For example if 0.9 is used it is predicted that a region b-genotype would contain 90% b-genotype. (Default: 0.9)|
 
 ###Input Format
 **[Sample input file]()**
@@ -103,14 +103,15 @@ $ snpbinner crosspoints --input PATH --output PATH (--min-length INT | --min-rat
 ![](README_images/bin_mapping-01.png)
 2. Contiguous series of crosspoints are then grouped together if they are closer to a neighbor than the specified minimum bin size.
 ![](README_images/bin_mapping-02.png)
-4. One-dimensional k-means optimization is then used to find the best placement for the bin boundaries (steps 2 and 4 below). In order to account for the minimum bin-size constraint, once a possible set of boundaries has been converged upon by the k-means algorithm, each mean is adjusted to insure it is at least the minimum distance from it's neighbors (steps 3 and 4 below). If this enters a cycle instead of converging on a working solution, the script will accept the adjusted boundaries without the second optimization step. Otherwise, optimization continues until a solution is reached with appropriately spaced boundaries.  
- <p align="center">_This example finishes due to a cycle (steps 3-5)._
+4. One-dimensional k-means optimization is then used to find the best placement for the bin boundaries (steps 2 and 4 below). This is repeated for every possible number of boundaries that can fit in the span of each group. In order to account for the minimum bin-size constraint, once a possible set of boundaries has been converged upon by the k-means algorithm, each mean is adjusted to insure it is at least the minimum distance from it's neighbors (steps 3 and 4 below). If this enters a cycle instead of converging on a working solution, the script will accept the adjusted boundaries without the second optimization step. Otherwise, optimization continues until a solution is reached with appropriately spaced boundaries.  
+ <p align="center">_This k=3 example finishes due to a cycle (steps 3-5)._
 ![](README_images/bin_mapping-03.png)
 </p>
-5. The above step is repeated for every possible number of boundaries that can fit in the span of each group. The boundaries from the best solution of all possible K for each group are then combined into a final list of map-region boundaries.
-[]()
+5. For each group, the solution with a value of k leading to the least variance from the adjusted means are placed into a list of final boundaries. These boundaries are then used to create bins for the final binmap.
+![](README_images/bin_mapping-04.png)
+6. Each RIL is then projected onto this bin and the results are output as a CSV. Bins are genotyped as whatever genotype represents a plurality of its contents. 
+![](README_images/bin_mapping-05.png)
 
-`bins` takes a CSV generated using `crosspoints` and a minimum bin size. It identifies a list of bins and their genotypes for each RIL. In order to do so, the crosspoints from all RILs are projected onto one representative chromosome. These crosspoints are then partitioned into groups where the distance between each consecutive crosspoint is less than the minimum bin size. Groups containing less than three crosspoints are combined into one representative crosspoint located at the centroid of the group. If the group contains three or more crosspoints, the maximum number of breakpoints that could fit inside the region bounded by the first and last crosspoint in each list is first determined by dividing the region size by the minimum bin size (rounded up). Then, clustering is performed for all values of K from the maximum number of breakpoints to 1 using a modified 1D K-means algorithm which adjusts the centroid values such that they are greater than a minimum distance from each other during the update step. Each of the produced clusterings are then scored using the average deviation for each cluster to the adjusted centroid. The adjusted centroids from the clustering with the lowest average deviation are then considered to be the representative crosspoints for the group of crosspoints. The representative crosspoints determined for each group are then used as the bounds of the bins created. To genotype the bins for each RIL, the genotype which covers the most area inside of the bin from the original crosspoint data is used. The bin locations, bounds, and genotypes for each RIL are then output in CSV format.
 ###Usage
 Running the bins command requires an input path, output path, and a minimum size argument. Optionally, a binmap ID may also be provided.
 
@@ -119,16 +120,16 @@ $ snpbinner bins --input PATH --output PATH --min-bin-size INT [--binmap-id ID]
 ```
 
 #####Required Arguments
-|Argument|Description|
-|:-:|:--|
-|`-i, --input PATH`| Path to a crosspoints CSV.|
-|`-o, --output PATH`| Path for the output CSV.|
-|`-l, --min-bin-size INT`| Minimum size of a bin in basepairs. This defines the resolution of the binmap.|
+|||Type|Description|
+|:-:|:-:|:-:|:--|
+| `-i` | `--input`| `PATH ` | Path to a crosspoints CSV.|
+|`-o`|`--output`|`PATH`| Path for the output CSV.|
+|`-l`|`--min-bin-size`|`INT`| Minimum size of a bin in basepairs. This defines the resolution of the binmap.|
 
 #####Optional Arguments
-|Argument|Description|
-|:-:|:--|
-|`-n, --binmap-id ID`| If a binmap ID is provided, a header row will be added and each column labeled with the given string.|
+|||Type|Description|
+|:-:|:-:|:-:|:--|
+|`-n`|`--binmap-id`|`ID`| If a binmap ID is provided, a header row will be added and each column labeled with the given string.|
 
 ###Input Format
 `bins` uses the output from `crosspoints`.  
@@ -141,12 +142,15 @@ For details, see the  **[`crosspoints`Output Format](#output-format)**.
 |   |Output is formatted as a comma-separated value (CSV) file and has the following rows.|
 |---|---|
 |0| (Optional) The binmap ID|
-|1| The start index of each bin (in base pairs).|
-|2| The end index of each bin (in base pairs).|
-|3| The location of the center of each bin (in base pairs).|
-|4+| RIL ID in the first cell, then the genotype at of the RIL project onto the binmap at for each bin.|
+|1| The start of each bin (in base pairs).|
+|2| The end of each bin (in base pairs).|
+|3| The center of each bin (in base pairs).|
+|4+| RIL ID in the first cell, then the genotypes of each bin for that RIL.|
  
 ##visualize
+| [Description](#description-2) | [Usage](#usage-2) | [Input Format](#input-format-2) | [Output Format](#output-format-2) |
+|---|---|---|---|
+
 `visualize` graphs the input and results of the `bins` and `crosspoints`. It can accept three filetypes (SNP input TSV, crosspoint script output CSV, and bin script output CSV). It then parses the files and groups the data by RIL, creating an image for each. In each colored row of the resulting images, regions are colored red, green, or blue, for genotype a, heterozygous, or genotype b, respectively. The binmap is represented in gray with adjacent bins alternating dark and light. The script can accept any combination or number of files for each of the different types.
 ###To Run:
 `$snpbinner visualize -o OUT_FOLDER [OPTIONAL ARGUMENTS]`  
