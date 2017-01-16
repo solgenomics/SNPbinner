@@ -15,7 +15,7 @@ The only non‑standard dependency of SNPbinner is [Pillow](https://github.com/p
 To install the SNPbinner utility, download or clone the repository and run 
 
 ```  
-$ pip install REPO‑PATH
+$ pip install REPO-PATH
 ```  
 Once installed, one can execute any of the commands below like so  
 
@@ -25,7 +25,7 @@ $ snpbinner COMMAND [ARGS...]
 **Alternatively**, without installing the package, one can execute any of the commands below using 
 
 ```
-$ python REPO‑PATH/snpbinner COMMAND [ARGS...]
+$ python REPO-PATH/snpbinner COMMAND [ARGS...]
 ``` 
 
 
@@ -56,7 +56,7 @@ $ python REPO‑PATH/snpbinner COMMAND [ARGS...]
 Running the `crosspoints` command requires an input path, output path, and a minimum size argument. There are also three optional arguments which can be found in the table below.
 
 ```
-$ snpbinner crosspoints ‑‑input PATH ‑‑output PATH (‑‑min‑length INT | ‑‑min‑ratio FLOAT) [optional args]  
+$ snpbinner crosspoints --input PATH --output PATH (--min-length INT | --min-ratio FLOAT) [optional args]  
 ``` 
 
 #####Required Arguments
@@ -116,7 +116,7 @@ $ snpbinner crosspoints ‑‑input PATH ‑‑output PATH (‑‑min‑length I
 Running the bins command requires an input path, output path, and a minimum size argument. Optionally, a binmap ID may also be provided.
 
 ```
-$ snpbinner bins ‑‑input PATH ‑‑output PATH ‑‑min‑bin‑size INT [‑‑binmap‑id ID]
+$ snpbinner bins --input PATH --output PATH --min-bin-size INT [--binmap-id ID]
 ```
 
 #####Required Arguments
@@ -158,7 +158,7 @@ For details, see the  **[`crosspoints`Output Format](#output‑format)**.
 ###Usage
 
 ```
-$ snpbinner visualize ‑‑out PATH [‑‑bins PATH]... [‑‑crosspoints PATH]... [‑‑snps PATH]...
+$ snpbinner visualize --out PATH [--bins PATH]... [--crosspoints PATH]... [--snps PATH]...
 ```
 
 #####Required Arguments
