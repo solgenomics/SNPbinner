@@ -8,10 +8,10 @@ from PIL import Image,ImageDraw, ImageFont
 
 def parser(parser_add_func,name):
     p = parser_add_func(name,description="")
-    p.add_argument("-s","--snp_path", action='append', default = [])
-    p.add_argument("-c","--crosspoint_path", action='append', default = [])
-    p.add_argument("-b","--binned_path", action='append', default = [])
-    p.add_argument("-o","--out_folder",required=True)
+    p.add_argument("-o","--out",         metavar="PATH", dest="out_folder",      required=True,                 help="Folder to which the resulting images should be saved.")
+    p.add_argument("-b","--bins",        metavar="PATH", dest="binned_path",     action='append', default = [], help="bins output file to be added to the visualization.")
+    p.add_argument("-c","--crosspoints", metavar="PATH", dest="crosspoint_path", action='append', default = [], help="crosspoints output file to be added to the visualization.")
+    p.add_argument("-s","--snps",        metavar="PATH", dest="snp_path",        action='append', default = [], help="SNP (crosspoints input file) file to be added to the visualization.")
     return p
 
 def run(snp_path,crosspoint_path,binned_path,out_folder):

@@ -6,8 +6,8 @@ import math
 def parser(parser_add_func,name):
     '''Sets up an arguement parser for this module. Note the arguement names match those in the `run` function.'''
     p = parser_add_func(name,description=__doc__)
-    p.add_argument("-i","--input",        metavar="PATH",  dest='input_file',   required=True,           help="Path to a crosspoints CSV.")
-    p.add_argument("-o","--output",       metavar="PATH",  dest='output_file',  required=True,           help="Path for the output CSV.")
+    p.add_argument("-i","--input",        metavar="PATH",  dest='input_path',   required=True,           help="Path to a crosspoints CSV.")
+    p.add_argument("-o","--output",       metavar="PATH",  dest='output_path',  required=True,           help="Path for the output CSV.")
     p.add_argument("-l","--min-bin-size", metavar="INT",   dest='min_bin_size', required=True, type=int, help="Minimum size of a bin in basepairs. This defines the resolution of the binmap.")
     p.add_argument("-n","--binmap-id",    metavar="ID",    dest="binmap_id",    default=False, type=str, help="If a binmap ID is provided, a header row will be added and each column labeled with the given string.")
     return p

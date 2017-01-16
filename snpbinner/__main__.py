@@ -21,7 +21,6 @@ def main():
     del args.program
     arg_dict = vars(args)
     arg_dict_to_pass = {key:arg_dict[key] for key in arg_dict if key!="program" and arg_dict[key]!=None}
-    print arg_dict_to_pass      
     program_run_dict[program_to_run](**arg_dict_to_pass)
 
 if __name__ == '__main__':
