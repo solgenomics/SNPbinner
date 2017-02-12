@@ -1,0 +1,46 @@
+##binmap id,01,01,01,01
+##bin start,0,316342,356166,676470
+##bin end,316342,356166,676470,1008563
+bin center,158171,336254,516318,842516
+RIL_1,b,b,b,b
+RIL_2,a,a,a,a
+RIL_3,a,a,a,a
+RIL_4,a,a,a,a
+RIL_5,b,b,b,b
+RIL_6,a,a,a,a
+RIL_7,b,b,b,b
+RIL_10,h,h,h,h
+RIL_11,a,a,a,a
+RIL_12,a,a,a,a
+RIL_13,b,b,b,b
+RIL_14,a,a,a,a
+RIL_16,b,b,b,b
+RIL_18,a,a,a,a
+RIL_19,a,a,a,a
+RIL_20,b,b,b,b
+RIL_21,a,a,a,a
+RIL_22,a,a,a,a
+RIL_23,b,b,b,a
+RIL_24,a,a,a,a
+RIL_25,a,a,a,a
+RIL_26,b,b,b,b
+RIL_27,b,a,a,a
+RIL_28,b,b,b,b
+RIL_30,b,b,b,b
+RIL_31,a,a,a,a
+RIL_32,a,a,a,a
+RIL_33,b,b,a,a
+RIL_34,b,b,b,b
+RIL_35,b,b,b,b
+RIL_37,a,a,a,a
+RIL_38,b,b,b,b
+RIL_39,a,a,a,a
+RIL_40,b,b,b,b
+RIL_41,b,b,b,b
+RIL_43,a,a,a,a
+RIL_45,a,a,a,a
+RIL_46,h,h,h,h
+RIL_47,b,b,b,b
+RIL_48,a,a,a,a
+RIL_49,b,b,b,b
+RIL_50,b,b,b,b

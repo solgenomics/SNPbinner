@@ -1,5 +1,5 @@
 #SNPbinner
-SNPbinner is a Python 2.7 package and command line utility for the generation of genotype binmaps based on SNP data across lines.  Analysis using SNPbinner is performed in three parts: `crosspoints`, `bins`, and `visualize`.
+SNPbinner is a Python 2.7 package and command line utility for the generation of genotype binmaps based on SNP genotype data across populations of recombinant inbred lines (RILs).  Analysis using SNPbinner is performed in three parts: `crosspoints`, `bins`, and `visualize`.
 
 ##Table of Contents
 [**Installation and Usage**](#installation‑and‑usage)  
@@ -74,8 +74,9 @@ $ snpbinner crosspoints --input PATH --output PATH (--min-length INT | --min-rat
 |`‑l`|`‑‑chrom‑len`|`INT`| The length of the chromosome/scaffold which the SNPs are on. If no length is provided the last SNP is considered to be the last site on the chromosome.|
 |`‑p`|`‑‑homogeneity`|`FLOAT`| Used to calculate emission probabilities. For example if 0.9 is used it is predicted that a region b‑genotype would contain 90% b‑genotype. (Default: 0.9)|
 
+
 ###Input Format
-**[Sample input file]()**
+**[Sample input file](sample_files/crosspoints_in.tsv)**
 
 |   |Input should be formatted as a tab‑separated value (TSV) file with the following columns.|
 |---|---|
@@ -84,7 +85,7 @@ $ snpbinner crosspoints --input PATH --output PATH (--min-length INT | --min-rat
 |2+|RIL ID (header) and the called genotype of the RIL at each position.|
 
 ###Output Format
-**[Sample output file]()**
+**[Sample output file](sample_files/crosspoints_out.tsv)**
 
 |   |Output is formatted as a comma‑separated value (CSV) file with the following columns.|
 |---|---|
@@ -137,7 +138,7 @@ For details, see the  **[`crosspoints`Output Format](#output‑format)**.
 
 
 ###Output Format
-**[Sample output file]()**
+**[Sample output file](sample_files/bins_out.tsv)**
 
 |   |Output is formatted as a comma‑separated value (CSV) file and has the following rows.|
 |---|---|
@@ -151,7 +152,7 @@ For details, see the  **[`crosspoints`Output Format](#output‑format)**.
 | [Description](#description‑2) | [Usage](#usage‑2) | [Input Format](#input‑format‑2) | [Output Format](#output‑format‑2) |
 |---|---|---|---|
 ###Description
-`visualize` plots the inputs and outputs of `bins` and `crosspoints`. It can accept three filetypes ([SNP input TSV](#input‑format), [crosspoint CSV](#output‑format), and [bin CSV](#output‑format‑1)). It then parses the files and groups the data by RIL, creating an image for each. In each row of the resulting images, regions are colored red, green, or blue, for genotype _a_, heterozygous, or genotype _b_, respectively. The binmap is represented in gray with adjacent bins alternating dark and light. The script can accept any combination or number of files for each of the different filetypes.
+`visualize` plots the inputs and outputs of `bins` and `crosspoints`. It can be used to visually check the results of the above commands to help determine the best values for each of the parameters. It can accept three filetypes ([SNP input TSV](#input‑format), [crosspoint CSV](#output‑format), and [bin CSV](#output‑format‑1)). It then parses the files and groups the data by RIL, creating an image for each. In each row of the resulting images, regions are colored red, green, or blue, for genotype _a_, heterozygous, or genotype _b_, respectively. The binmap is represented in gray with adjacent bins alternating dark and light. The script can accept any combination or number of files for each of the different filetypes.
 
 ###Example
 ![](README_images/visualize.png)
