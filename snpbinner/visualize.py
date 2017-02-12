@@ -1,4 +1,6 @@
 '''This script provides a way to visualize the results and input to the `bins` and `crosspoints` scripts. It can accept three filetypes (SNP input TSV, crosspoint script output CSV, and bin script output CSV). It then parses the files and groups the data by RIL, creating an image for each. In each colored row of the resulting images, regions are colored red, green, or blue, for genotype a, heterozygous, or genotype b, respecively. The binamp is represented in gray with adjacent bins alternating dark and light. The script can accept any combination or number of files for each of the different types.'''
+#Comments pending.
+
 import sys
 import os
 from collections import OrderedDict
@@ -154,7 +156,7 @@ def run(snp_path,crosspoint_path,binned_path,out_folder):
             row_list.append((name,individuals[indv]["BIN_maps"][name]))
         row_list.sort(key=lambda row:next((i for i, x in enumerate(row_order) if  row[0].split(":",1)[-1].strip().startswith(x)), -1))
 
-        builder = Indvidual_image_builder(indv)
+        builder = Indvidual_image_builder(indv,maximum_index)
         for row in row_list:
             builder.add_row(*row)
         image_builders.append(builder)
@@ -189,9 +191,13 @@ def val_to_color(val):
 
 class Indvidual_image_builder(object):
     title_height = 25
+    scale_height = 20
+    scale_bar_height = 15
+    scale_bar_ticks = 10
     padding = 1
-    def __init__(self, name):
+    def __init__(self, name, maximum_index):
         self.name = name.strip()
+        self.max_index = maximum_index
         self.length = None
         self.row_list = OrderedDict()
     def add_row(self,row_name,row_col_cols):
@@ -206,7 +212,7 @@ class Indvidual_image_builder(object):
         sys.stderr.write("Saving %s..." % file_name)
         section_height = int(1/10.0 * self.length)
         w = self.length
-        h = len(self.row_list)*section_height+self.title_height
+        h = len(self.row_list)*section_height+self.title_height+self.scale_height+self.scale_bar_height
         img = np.empty((w,h),np.uint32)
         img.shape=h,w
         img[0:h,0:w] = 0xffffffff
@@ -230,9 +236,31 @@ class Indvidual_image_builder(object):
             draw.rectangle(box_bounds, fill=(255,255,255))
             draw.text(text_loc, row_name, (0,0,0),font=font)
 
+        scale_bar_top = h-(self.title_height+self.scale_height+self.scale_bar_height)
+        draw.line([(0,scale_bar_top+self.scale_bar_height*0.6),(w,scale_bar_top+self.scale_bar_height*0.6)],width=1, fill=(0,0,0))
+        tick_size = w/float(self.scale_bar_ticks+1)
+        tick_val_size = self.max_index/float(self.scale_bar_ticks+1)
+        for tick in range(1,self.scale_bar_ticks+1):
+            xloc = tick_size*tick
+            label = readable(tick_val_size*tick)
+            tick_top = scale_bar_top + self.scale_bar_height*0.2
+            tick_bot = scale_bar_top + self.scale_bar_height
+            draw.line([(xloc,tick_top),(xloc,tick_bot)],width=1, fill=(0,0,0))
+            yloc = h-(self.title_height+self.scale_height*0.5)
+            tw,th = font.getsize(label)
+            draw.text((xloc-tw//2,(yloc-th//2)), label, (0,0,0),font=font)
+
         tw,th = font.getsize(self.name)
         draw.rectangle(((0,h-self.title_height),(w,h)), fill=(0,0,0))
-        draw.text((self.length//2-tw//2,(h-(self.title_height//2)-th//2)), self.name, (255,255,255),font=font)
+        draw.text((w//2-tw//2,(h-(self.title_height//2)-th//2)), self.name, (255,255,255),font=font)
 
         pil_im.save(file_name,optimize=True)
         sys.stderr.write(" Done.\n")
+
+def readable(basepairs):
+    labels = ["bp","Kb","Mb","Gb"]
+    label = 0
+    while basepairs>=1000 and label<len(labels):
+        label+=1
+        basepairs /= 1000.0
+    return str(basepairs)[:4].strip(".")+" "+labels[label]
