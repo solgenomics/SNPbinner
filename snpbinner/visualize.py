@@ -8,15 +8,9 @@ import math
 import numpy as np
 from PIL import Image,ImageDraw, ImageFont
 
-def parser(parser_add_func,name):
-    p = parser_add_func(name,description="")
-    p.add_argument("-o","--out",         metavar="PATH", dest="out_folder",      required=True,                 help="Folder to which the resulting images should be saved.")
-    p.add_argument("-b","--bins",        metavar="PATH", dest="binned_path",     action='append', default = [], help="bins output file to be added to the visualization.")
-    p.add_argument("-c","--crosspoints", metavar="PATH", dest="crosspoint_path", action='append', default = [], help="crosspoints output file to be added to the visualization.")
-    p.add_argument("-s","--snps",        metavar="PATH", dest="snp_path",        action='append', default = [], help="SNP (crosspoints input file) file to be added to the visualization.")
-    return p
-
-def run(snp_path,crosspoint_path,binned_path,out_folder):
+def visualize(snp_path,crosspoint_path,binned_path,out_folder):
+    if not os.path.exists(out_folder):
+        os.makedirs(out_folder)
     snp_data, crosspoint_data, binned_data = OrderedDict(),OrderedDict(),OrderedDict()
     maximum_index = 0
     columns = 1000
@@ -156,7 +150,7 @@ def run(snp_path,crosspoint_path,binned_path,out_folder):
             row_list.append((name,individuals[indv]["BIN_maps"][name]))
         row_list.sort(key=lambda row:next((i for i, x in enumerate(row_order) if  row[0].split(":",1)[-1].strip().startswith(x)), -1))
 
-        builder = Indvidual_image_builder(indv,maximum_index)
+        builder = _Indvidual_image_builder(indv,maximum_index)
         for row in row_list:
             builder.add_row(*row)
         image_builders.append(builder)
@@ -169,27 +163,27 @@ def run(snp_path,crosspoint_path,binned_path,out_folder):
 
 
 
-def rgba_hex_val(r,g,b,a=255): return reduce(lambda x,y:(x<<8)|y,(a,b,g,r),0)
+def _rgba_hex_val(r,g,b,a=255): return reduce(lambda x,y:(x<<8)|y,(a,b,g,r),0)
 
 genotype_values = {"a":1,"h":0,"b":-1}
 genotype_colors = {"a":[255,0,0],"b":[0,0,255],"h":[0,255,0],"no_data":[255,255,255]}
 bin_map_values = {"bmc1":2,"bmc2":4}
 bin_map_colors = {"bmc1":[107,107,107],"bmc2":[147,147,147]}
 
-def val_to_color(val):
+def _val_to_color(val):
     if val!=None and val<=1 and val>=0:
         ratio = val
-        return rgba_hex_val(*[int(i*ratio+j*(1-ratio)) for i,j in zip(genotype_colors["a"],genotype_colors["h"])])
+        return _rgba_hex_val(*[int(i*ratio+j*(1-ratio)) for i,j in zip(genotype_colors["a"],genotype_colors["h"])])
     elif val!=None and val>=-1 and val<0:
         ratio = abs(val)
-        return rgba_hex_val(*[int(i*ratio+j*(1-ratio)) for i,j in zip(genotype_colors["b"],genotype_colors["h"])])
+        return _rgba_hex_val(*[int(i*ratio+j*(1-ratio)) for i,j in zip(genotype_colors["b"],genotype_colors["h"])])
     elif val==bin_map_values["bmc1"]:
-        return rgba_hex_val(*bin_map_colors["bmc1"])
+        return _rgba_hex_val(*bin_map_colors["bmc1"])
     elif val==bin_map_values["bmc2"]:
-        return rgba_hex_val(*bin_map_colors["bmc2"])
-    return rgba_hex_val(*(genotype_colors["no_data"]))
+        return _rgba_hex_val(*bin_map_colors["bmc2"])
+    return _rgba_hex_val(*(genotype_colors["no_data"]))
 
-class Indvidual_image_builder(object):
+class _Indvidual_image_builder(object):
     title_height = 25
     scale_height = 20
     scale_bar_height = 15
@@ -201,7 +195,7 @@ class Indvidual_image_builder(object):
         self.length = None
         self.row_list = OrderedDict()
     def add_row(self,row_name,row_col_cols):
-        self.row_list[row_name] = [val_to_color(x) for x in row_col_cols]
+        self.row_list[row_name] = [_val_to_color(x) for x in row_col_cols]
         if self.length==None: self.length = len(self.row_list[row_name])
     def __str__(self):
         strin = self.name+"\n"
@@ -242,7 +236,7 @@ class Indvidual_image_builder(object):
         tick_val_size = self.max_index/float(self.scale_bar_ticks+1)
         for tick in range(1,self.scale_bar_ticks+1):
             xloc = tick_size*tick
-            label = readable(tick_val_size*tick)
+            label = _readable(tick_val_size*tick)
             tick_top = scale_bar_top + self.scale_bar_height*0.2
             tick_bot = scale_bar_top + self.scale_bar_height
             draw.line([(xloc,tick_top),(xloc,tick_bot)],width=1, fill=(0,0,0))
@@ -257,10 +251,19 @@ class Indvidual_image_builder(object):
         pil_im.save(file_name,optimize=True)
         sys.stderr.write(" Done.\n")
 
-def readable(basepairs):
+def _readable(basepairs):
     labels = ["bp","Kb","Mb","Gb"]
     label = 0
     while basepairs>=1000 and label<len(labels):
         label+=1
         basepairs /= 1000.0
     return str(basepairs)[:4].strip(".")+" "+labels[label]
+
+_cl_entry = visualize
+def _parser(parser_add_func,name):
+    p = parser_add_func(name,description="")
+    p.add_argument("-o","--out",         metavar="PATH", dest="out_folder",      required=True,                 help="Folder to which the resulting images should be saved.")
+    p.add_argument("-b","--bins",        metavar="PATH", dest="binned_path",     action='append', default = [], help="bins output file to be added to the visualization.")
+    p.add_argument("-c","--crosspoints", metavar="PATH", dest="crosspoint_path", action='append', default = [], help="crosspoints output file to be added to the visualization.")
+    p.add_argument("-s","--snps",        metavar="PATH", dest="snp_path",        action='append', default = [], help="SNP (crosspoints input file) file to be added to the visualization.")
+    return p

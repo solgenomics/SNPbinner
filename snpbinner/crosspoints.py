@@ -1,26 +1,30 @@
 '''Uses genotyped SNP data to identify likely crossover points. (See README for more information)'''
 from math import log
+import os
 
-def parser(parser_add_func,name):
-    '''Sets up an arguement parser for this module. Note the `dest` values match the arguements in the `run` function.'''
-    p = parser_add_func(name,description="")
-    #required
-    p.add_argument("-i","--input",       metavar="PATH",  dest='input_file',                           required=True, help="Path to a SNP TSV.")
-    p.add_argument("-o","--output",      metavar="PATH",  dest='output_file',                          required=True, help="Path for the output CSV.")
-    g = p.add_mutually_exclusive_group(required=True)
-    g.add_argument("-m","--min-length",  metavar="INT",   dest='min_state_length',      type=int,                     help="Minimum distance between crosspoints in basepairs. Cannot be used with `min-ratio`.")
-    g.add_argument("-r","--min-ratio",   metavar="FLOAT", dest='min_state_ratio',       type=float,                   help="Minimum distance between crosspoints as a ratio. (0.01 would be 1%% of the chromosome.) Cannot be used with `min-length`.")
-    #optional
-    p.add_argument("-c","--cross-count", metavar="FLOAT", dest='predicted_cross_count', type=float,    default=4,     help="Used to calculate transition probability. The state transition probability is this value divided by the chromosome length. (default = 4)")
-    p.add_argument("-l","--chrom-len",   metavar="INT",   dest='chrom_len',             type=int,      default=0,     help="The length of the chromosome/scaffold which the SNPs are on. If no length is provided, the last SNP is considered to be the last site on the chromosome.")
-    p.add_argument("-p","--homogeneity", metavar="FLOAT", dest='predicted_homogeneity', type=float,    default=0.9,   help="Used to calculate emmision probabilities. For example, if 0.9 is used, it is predicted that a region genotyped as b would contain 90%% b-genotyped SNPs. (default = 0.9)")
-    return p
+def _crosspoints_batcher(input_path,output_path,predicted_homogeneity,predicted_cross_count,chrom_len,min_state_length=None,min_state_ratio=None):
+    input_list = input_path
+    if len(input_list) == 1:
+        crosspoints(input_path[0],output_path,predicted_homogeneity,predicted_cross_count,chrom_len,min_state_length,min_state_ratio)
+    else:
+        output_folder = output_path
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+        for file in input_list:
+            print("Determining crosspoints for: "+file)
+            out_file = os.path.join(output_folder,os.path.basename(file)+".crosp.csv")
+            try:
 
-def run(input_file,output_file,predicted_homogeneity,predicted_cross_count,chrom_len,min_state_length=None,min_state_ratio=None):
+                crosspoints(file,out_file,predicted_homogeneity,predicted_cross_count,0,min_state_length,min_state_ratio)
+            except Exception as detail:
+                print("FAILED! Details:")
+                print(detail)
+
+def crosspoints(input_path,output_path,predicted_homogeneity,predicted_cross_count,chrom_len,min_state_length=None,min_state_ratio=None):
     '''Runs the module'''
 
     #get file statistics
-    individual_count,snp_count,auto_chrom_len = get_file_stats(input_file)
+    individual_count,snp_count,auto_chrom_len = _get_file_stats(input_path)
     if chrom_len==0: 
         chrom_len=auto_chrom_len
 
@@ -29,18 +33,18 @@ def run(input_file,output_file,predicted_homogeneity,predicted_cross_count,chrom
         min_state_length = chrom_len*float(min_state_ratio)
 
     # clear output file
-    with open(output_file,"w") as outfile:
+    with open(output_path,"w") as outfile:
         pass
 
-    # contruct the Hidden Markov Models (HMM) used to predict states
+    # contruct the Hidden Markov Models (_HMM) used to predict states
     crosspoint_probability = predicted_cross_count/float(chrom_len)
     intra_p = predicted_homogeneity # emmision probability of the genotype corresponding to the state
     inter_p = 1-intra_p                   # emmision probability of the opposite genotype
 
-    # create a HMM that registers heterogeneous regions
+    # create a _HMM that registers heterogeneous regions
     error = crosspoint_probability/2.0  # transition probability for other 2 states
     crrct = 1-(error*2)                 # transition probability for same state
-    hmm_all = HMM(
+    hmm_all = _HMM(
         states      = ["a", "b", "h"],
         priors      = [0.3, 0.3, 0.3],
         transition = [[crrct, error, error],
@@ -52,10 +56,10 @@ def run(input_file,output_file,predicted_homogeneity,predicted_cross_count,chrom
                       [0.5,     0.5,     inter_p*2]] #this configuration for h emmision has good performance, but does not have statistical meaning.
         )
 
-    # create a HMM that does not register heterogeneous regions, this is used to split hetero regions more appropriately when it is required
+    # create a _HMM that does not register heterogeneous regions, this is used to split hetero regions more appropriately when it is required
     error = crosspoint_probability
     crrct = 1-error
-    hmm_nohet = HMM(
+    hmm_nohet = _HMM(
         states      = ["a", "b"],
         priors      = [0.5, 0.5],
         transition = [[crrct, error],
@@ -65,27 +69,27 @@ def run(input_file,output_file,predicted_homogeneity,predicted_cross_count,chrom
                       [inter_p, intra_p]] 
         )
 
-    #Runs the crosspoint identification on the input file using the created HMMs and writes them to a file
+    #Runs the crosspoint identification on the input file using the created _HMMs and writes them to a file
     for i in range(0,individual_count):
-        snplist,name = read_column(input_file,i)
+        snplist,name = _read_column(input_path,i)
         # get the crosspoints
-        cp = find_crosspoints(
+        cp = _find_crosspoints(
             snplist          = snplist,
             min_state_length = min_state_length,
             chrom_length     = chrom_len,
             hmm_nohet         = hmm_nohet,
             hmm_all          = hmm_all)
-        with open(output_file,"a") as outfile:
+        with open(output_path,"a") as outfile:
             outfile.write(",".join([name]+[str(n) for n in cp])+",\n")
         print (name)
 
-def find_crosspoints(snplist, min_state_length, chrom_length, hmm_nohet, hmm_all):
-    '''Identifies crosspoints using two HMMs.'''
+def _find_crosspoints(snplist, min_state_length, chrom_length, hmm_nohet, hmm_all):
+    '''Identifies crosspoints using two _HMMs.'''
 
-    # run HMM.gapped_viterbi to find state regions regardless of length
+    # run _HMM.gapped_viterbi to find state regions regardless of length
     cross_points  = hmm_all.gapped_viterbi(snplist)
 
-    # run HMM.gapped_viterbi to find state regions regardless of length, ignoring the possibility of hetero regions.
+    # run _HMM.gapped_viterbi to find state regions regardless of length, ignoring the possibility of hetero regions.
     no_hetero_cross_points = hmm_nohet.gapped_viterbi(snplist)
 
     #Replace any heterogenous regions which are below the minimum state length with the most likely homogenous state regions
@@ -129,7 +133,7 @@ def find_crosspoints(snplist, min_state_length, chrom_length, hmm_nohet, hmm_all
 
 
     # For each contiguous group of too-short regions, assign them genotypes. The algorithm is designed to minimize the number of mismatches between identified state and assigned state. In order to do this genotypes are assigned to contigous groups of too-short regions using the following rules, in order of priority where each rule is only applied when the conditions of those above it are not fullfilled:
-    #   1. If a contiguous group of too-short regions is long enough to be its own acceptably-long region, it will be treated as such and assigned the most likely genotype using the 3-state HMM.
+    #   1. If a contiguous group of too-short regions is long enough to be its own acceptably-long region, it will be treated as such and assigned the most likely genotype using the 3-state _HMM.
     #   2. If the first or last too-short region is neighboring to an acceptably-long region of the same genotype, it can be considered part of that region, and removed from the group.
     #   3. If the first or last too-short region is neighboring an acceptably-long heterogenous region, it will be assigned the heterogenous genotype and removed from the group as per Rule 2.
     #   4. If neither the first or last too-short region is neighboring a heterogenous or same-genotype region, the shortest of those two regions will be assigned to the same genotype as the acceptably-long region neighboring it and then removed as per Rule 2.
@@ -160,7 +164,7 @@ def find_crosspoints(snplist, min_state_length, chrom_length, hmm_nohet, hmm_all
                 if cross_points[group[-1][1]]-cross_points[group[0][0]] >= min_state_length:
                     # The length of the whole group is enough to be its own region. So, treat all regions as one and assign the most likely genotype.
                     
-                    #finds the SNPs represented by the region and runs them through the 3-state HMM (hmm_all)
+                    #finds the SNPs represented by the region and runs them through the 3-state _HMM (hmm_all)
                     first_snp = None
                     last_snp = None
                     i = 0
@@ -221,8 +225,8 @@ def find_crosspoints(snplist, min_state_length, chrom_length, hmm_nohet, hmm_all
     return cross_points
 
 
-class HMM(object):
-    """A basic hidden markov model class for running the HMM.gapped_viterbi method"""
+class _HMM(object):
+    """A basic hidden markov model class for running the _HMM.gapped_viterbi method"""
     def __init__(self,states,priors,transition,observable,emission):
         self.states = states
         self.priors = [log(n) for n in priors]
@@ -288,7 +292,7 @@ class HMM(object):
 
         return crosspoint_list
 
-def read_column(filename, col, filter=True):
+def _read_column(filename, col, filter=True):
     '''Reads a single column with name header out of a TSV document '''
     with open(filename, "r") as f:
         snp_list = []
@@ -306,16 +310,33 @@ def read_column(filename, col, filter=True):
                     snp_list.append((int(float(items[1])), items[col+2].lower()))
         return snp_list,name
 
-def get_file_stats(filename):
+def _get_file_stats(filename):
     '''Counts coulumns[-1 header](individual_count), rows[-1 header](snp_count), and returns the last row header (last_index) from a TSV.'''
     individual_count = 0
+    print filename
     with open(filename, "r") as f:
         title_line = ""
         while title_line.strip()=="" or title_line.startswith("#"):
             title_line = f.readline()
         indvs = title_line.strip().split('\t')[2:]
         individual_count = len(indvs)
-    snps = read_column(filename,0,filter=False)[0]
+    snps = _read_column(filename,0,filter=False)[0]
     last_index = snps[-1][0]
     snp_count = len(snps)
     return individual_count,snp_count,last_index
+
+_cl_entry = _crosspoints_batcher
+def _parser(parser_add_func,name):
+    '''Sets up an arguement parser for this module. Note the `dest` values match the arguements in the `crosspoints` function.'''
+    p = parser_add_func(name,description="")
+    #required
+    p.add_argument("-i","--input",       metavar="PATH",  dest='input_path',            nargs='*',     required=True, help="Path to a SNP TSV, a multiple paths, or a Unix-style glob (e.g. myGenome.chr*.tsv).")
+    p.add_argument("-o","--output",      metavar="PATH",  dest='output_path',                          required=True, help="Path for the output CSV when there is a single input, or for a folder when there are multiple.")
+    g = p.add_mutually_exclusive_group(required=True)
+    g.add_argument("-m","--min-length",  metavar="INT",   dest='min_state_length',      type=int,                     help="Minimum distance between crosspoints in basepairs. Cannot be used with `min-ratio`.")
+    g.add_argument("-r","--min-ratio",   metavar="FLOAT", dest='min_state_ratio',       type=float,                   help="Minimum distance between crosspoints as a ratio. (0.01 would be 1%% of the chromosome.) Cannot be used with `min-length`.")
+    #optional
+    p.add_argument("-c","--cross-count", metavar="FLOAT", dest='predicted_cross_count', type=float,    default=4,     help="Used to calculate transition probability. The state transition probability is this value divided by the chromosome length. (default = 4)")
+    p.add_argument("-l","--chrom-len",   metavar="INT",   dest='chrom_len',             type=int,      default=0,     help="The length of the chromosome/scaffold which the SNPs are on. If no length is provided (or multiple file are being processed), the last SNP is considered to be the last site on the chromosome.")
+    p.add_argument("-p","--homogeneity", metavar="FLOAT", dest='predicted_homogeneity', type=float,    default=0.9,   help="Used to calculate emmision probabilities. For example, if 0.9 is used, it is predicted that a region genotyped as b would contain 90%% b-genotyped SNPs. (default = 0.9)")
+    return p

@@ -62,8 +62,8 @@ $ snpbinner crosspoints --input PATH --output PATH (--min-length INT | --min-rat
 #####Required Arguments
 |||Type|Description|
 |:-:|:-:|:-:|:--|
-|`‑i`|`‑‑input`|`PATH`| Path to a SNP TSV.|
-|`‑o`|`‑‑output`|`PATH`| Path for the output CSV.|
+|`‑i`|`‑‑input`|`PATH`| Path to a SNP TSV, multiple paths, or a glob (e.g. myGenome.chr*.tsv).|
+|`‑o`|`‑‑output`|`PATH`| Path for the output CSV when there is a single input, or for a folder when there are multiple.|
 |`‑m`|`‑‑min‑length`|`INT`| Minimum distance between crosspoints in basepairs. Cannot be used with `min‑ratio`.|
 |`‑r`|`‑‑min‑ratio`|`FLOAT`| Minimum distance between crosspoints as a ratio. (0.01 would be 1% of the chromosome.) Cannot be used with `min‑length`.|
 
@@ -71,7 +71,7 @@ $ snpbinner crosspoints --input PATH --output PATH (--min-length INT | --min-rat
 |||Type|Description|
 |:-:|:-:|:-:|:--|
 |`‑c`|`‑‑cross‑count`|`FLOAT`| Used to calculate transition probability. The state transition probability is this value divided by the chromosome length. (default: 4)|
-|`‑l`|`‑‑chrom‑len`|`INT`| The length of the chromosome/scaffold which the SNPs are on. If no length is provided the last SNP is considered to be the last site on the chromosome.|
+|`‑l`|`‑‑chrom‑len`|`INT`| The length of the chromosome/scaffold which the SNPs are on. If no length is provided (or multiple file are being processed), the last SNP is considered to be the last site on the chromosome.|
 |`‑p`|`‑‑homogeneity`|`FLOAT`| Used to calculate emission probabilities. For example if 0.9 is used it is predicted that a region b‑genotype would contain 90% b‑genotype. (Default: 0.9)|
 
 
@@ -123,9 +123,9 @@ $ snpbinner bins --input PATH --output PATH --min-bin-size INT [--binmap-id ID]
 #####Required Arguments
 |||Type|Description|
 |:-:|:-:|:-:|:--|
-| `‑i` | `‑‑input`| `PATH ` | Path to a crosspoints CSV.|
-|`‑o`|`‑‑output`|`PATH`| Path for the output CSV.|
-|`‑l`|`‑‑min‑bin‑size`|`INT`| Minimum size of a bin in basepairs. This defines the resolution of the binmap.|
+| `‑i` | `‑‑input`| `PATH ` | Path to a crosspoints CSV, multiple paths, or a glob (e.g. myGenome.chr*.crosp.csv).|
+|`‑o`|`‑‑output`|`PATH`| Path for the output CSV when there is a single input, or for a folder when there are multiple.|
+|`‑l`|`‑‑min‑bin‑size`|`INT`| If a binmap ID is provided, a header row will be added and each column labeled with the given string. When processing multiple files, the ID is the filename.|
 
 #####Optional Arguments
 |||Type|Description|

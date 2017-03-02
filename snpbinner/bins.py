@@ -1,18 +1,26 @@
 """This script takes an output file from the crosspoints script (X.crosspoints.csv) and a minimum bin size and identifies a list of bins and their genotypes for each RIL. In order to do so, the crosspoints from all RILs are projected onto one representative chromosome. These crosspoints are then partitioned into groups where the distance between each consectutive crosspoint is less than the minimum bin size. Groups containing less than three crosspoint are combined into one representitive crosspoint located at the centroid of the group. If the group contains three or more crosspoints, the maximum number of breakpoints that fit inside the region bounded by the first and last crosspoint in each list is first determined by dividing the region size by the minimum bin size (rounded up). Then, clustering isperformed for all values of K from the maximum number of breakpoints to 1 using a modified 1D K-means algorithm which adjusts the centroid values such that they are greater than a minimum distance from eachother during the update step. Each of the produced clusterings are then scored using the average deviation for each cluster to the adjusted centroid. The adjusted centroids from the clustering with the lowest average deviation are then considered to be the representitive crosspoints for the group of crosspoints. The representative crosspoints determined for each group are then used as the bounds of the bins created. To genotype the bins for each RIL, the genotype which covers the most area inside of the bin fromthe original crosspoint data is used. The bin locations, bounds, and genotypes for each RIL are then output in CSV format."""
 
 from collections import OrderedDict
-import math
+import math, os
 
-def parser(parser_add_func,name):
-    '''Sets up an arguement parser for this module. Note the arguement names match those in the `run` function.'''
-    p = parser_add_func(name,description=__doc__)
-    p.add_argument("-i","--input",        metavar="PATH",  dest='input_path',   required=True,           help="Path to a crosspoints CSV.")
-    p.add_argument("-o","--output",       metavar="PATH",  dest='output_path',  required=True,           help="Path for the output CSV.")
-    p.add_argument("-l","--min-bin-size", metavar="INT",   dest='min_bin_size', required=True, type=int, help="Minimum size of a bin in basepairs. This defines the resolution of the binmap.")
-    p.add_argument("-n","--binmap-id",    metavar="ID",    dest="binmap_id",    default=False, type=str, help="If a binmap ID is provided, a header row will be added and each column labeled with the given string.")
-    return p
+def _bins_batcher(input_path,output_path,min_bin_size,binmap_id=False):
+    input_list = input_path
+    if len(input_list) == 1:
+        bins(input_path[0],output_path,min_bin_size,binmap_id)
+    else:
+        output_folder = output_path
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+        for file in input_list:
+            print("Determining bins for: "+file)
+            out_file = os.path.join(output_folder,os.path.basename(file)+".bins.csv")
+            try:
+                bins(file,out_file,min_bin_size,os.path.basename(file))
+            except Exception as detail:
+                print("FAILED! Details:")
+                print(detail)
 
-def run(input_path,output_path,min_bin_size,binmap_id):
+def bins(input_path,output_path,min_bin_size,binmap_id=False):
     '''Runs the module'''
 
     #load all RIL crosspoint data and find the chromosome length
@@ -77,9 +85,9 @@ def run(input_path,output_path,min_bin_size,binmap_id):
         #if it is less than two, simply average the crosspoints for the best fitting boundary
         if max_new_cp<2:
             print "\nN=1"
-            print "g",bin_bound_visualize(expanded_group,group[0],group[-1])
-            bin_bounds.append(crosspoint_avg(cp_loc_count,group,chrom_len))
-            print "f",bin_bound_visualize(bin_bounds[-1:],group[0],group[-1],aura=min_bin_size)
+            print "g",_bin_bound_visualize(expanded_group,group[0],group[-1])
+            bin_bounds.append(_crosspoint_avg(cp_loc_count,group,chrom_len))
+            print "f",_bin_bound_visualize(bin_bounds[-1:],group[0],group[-1],aura=min_bin_size)
             continue
 
         #For each possible number of boundaries, predict the locations using k-means and the sum of the variance between each crosspoint to the closest boundary
@@ -87,7 +95,7 @@ def run(input_path,output_path,min_bin_size,binmap_id):
         for cp_count in range(max_new_cp,0,-1):
 
             print "\n"+("N=%s"%cp_count)+"\n"
-            print "g",bin_bound_visualize(expanded_group,group[0],group[-1])
+            print "g",_bin_bound_visualize(expanded_group,group[0],group[-1])
 
             #initilize the k-means psuedo-centroids (they are not true centroids once adjusted for minimum distance) to be evenly spaced within the group
             start_cp_dist = group_len/float(cp_count)
@@ -103,7 +111,7 @@ def run(input_path,output_path,min_bin_size,binmap_id):
                 while nearest+1<len(km_points) and abs(cp-km_points[nearest+1]) < abs(cp-km_points[nearest]):
                     nearest+=1
                 km_groups[nearest].append(cp)
-            print "u",bin_bound_visualize(km_points,group[0],group[-1],aura=min_bin_size)
+            print "u",_bin_bound_visualize(km_points,group[0],group[-1],aura=min_bin_size)
 
             #Now that the cps have been assigned to km_groups (groups with a common closest centroid), perform k-means optimization!
             memo = set() #stores each visited state so that minima cycles can be detected
@@ -112,7 +120,7 @@ def run(input_path,output_path,min_bin_size,binmap_id):
                 change="non" #This string is for print output only.
 
                 #recalculate the centroids
-                km_points = [crosspoint_avg(cp_loc_count,k,chrom_len) for k in km_groups]
+                km_points = [_crosspoint_avg(cp_loc_count,k,chrom_len) for k in km_groups]
 
                 #Checks to make sure there were no empty groups, if there were, it places the centroid of the empty group at the midpoint between the surrounding centroids.
                 for k in range(1,len(km_points)-1):
@@ -167,11 +175,11 @@ def run(input_path,output_path,min_bin_size,binmap_id):
                         change="ovr"
                     else:
                         change="adj"
-                print change,bin_bound_visualize(km_points,group[0],group[-1],aura=min_bin_size)
+                print change,_bin_bound_visualize(km_points,group[0],group[-1],aura=min_bin_size)
 
 
-            print "f",bin_bound_visualize(km_points,group[0],group[-1],aura=min_bin_size)
-            print "g",bin_bound_visualize(expanded_group,group[0],group[-1])
+            print "f",_bin_bound_visualize(km_points,group[0],group[-1],aura=min_bin_size)
+            print "g",_bin_bound_visualize(expanded_group,group[0],group[-1])
 
             #calculate sum of variance from closest centroids
             dists = [[]]
@@ -246,7 +254,7 @@ def run(input_path,output_path,min_bin_size,binmap_id):
         for line in bin_genotypes:
             outfile.write("%s,%s\n" % (line,",".join(str(x) for x in bin_genotypes[line])))
 
-def crosspoint_avg(weights,cp_list,chrom_len):
+def _crosspoint_avg(weights,cp_list,chrom_len):
     '''Calculates the average for a list of crosspoints. Or, if one is at either end of the chromosome, return the near end of the chrom.'''
     if len(cp_list)<1:
         return float('nan')
@@ -255,7 +263,7 @@ def crosspoint_avg(weights,cp_list,chrom_len):
             avg = 0 if 0 in cp_list else chrom_len
     return int(avg)
                 
-def bin_bound_visualize(cps,begin,end,bins=75,aura=0):
+def _bin_bound_visualize(cps,begin,end,bins=75,aura=0):
     '''Returns a string of characters showing spacing, counts, and overlap bewteen bin bounds or crosspoints.'''
     empty_sym,aura_sym,aura_end_sym,aura_overlap_sym = (" ","-","|","x")
     bin_size = (end-begin)/float(bins-1)
@@ -297,3 +305,13 @@ def bin_bound_visualize(cps,begin,end,bins=75,aura=0):
                     elif loc_map[j] in (aura_sym,aura_end_sym):
                         loc_map[j]=aura_overlap_sym
     return "".join(loc_map)
+
+_cl_entry = _bins_batcher
+def _parser(parser_add_func,name):
+    '''Sets up an arguement parser for this module. Note the arguement names match those in the `bins` function.'''
+    p = parser_add_func(name,description=__doc__)
+    p.add_argument("-i","--input",        metavar="PATH",  dest='input_path',   required=True, nargs='*', help="Path to a crosspoints CSV, multiple paths, or a Unix-style glob (e.g. myGenome.chr*.crosp.csv).")
+    p.add_argument("-o","--output",       metavar="PATH",  dest='output_path',  required=True,            help="Path for the output CSV when there is a single input, or for a folder when there are multiple.")
+    p.add_argument("-l","--min-bin-size", metavar="INT",   dest='min_bin_size', required=True, type=int,  help="Minimum size of a bin in basepairs. This defines the resolution of the binmap.")
+    p.add_argument("-n","--binmap-id",    metavar="ID",    dest="binmap_id",    default=False, type=str,  help="If a binmap ID is provided, a header row will be added and each column labeled with the given string. When processing multiple files, the ID is the filename.")
+    return p

@@ -3,7 +3,7 @@
 from setuptools import setup
 
 setup(name='snpbinner',
-    version='0.1.4',
+    version='0.2.1',
     description='',
     author='David Lyon',
     author_email='dlyon@fandm.edu',
