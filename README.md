@@ -137,7 +137,7 @@ For details, see the  **[`crosspoints`Output Format](#output‑format)**.
 
 
 ### Output Format
-**[Sample output file](sample_files/bins_out.tsv)**
+**[Sample output file](sample_files/bins_out.csv)**
 
 |   |Output is formatted as a comma‑separated value (CSV) file and has the following rows.|
 |---|---|
