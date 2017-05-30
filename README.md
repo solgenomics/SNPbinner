@@ -105,10 +105,8 @@ $ snpbinner crosspoints --input PATH --output PATH (--min-length INT | --min-rat
 2. Contiguous series of crosspoints are then grouped together if they are closer to a neighbor than the specified minimum bin size.
 ![](README_images/bin_mapping-02.png)
 4. One‑dimensional k‑means optimization is then used to find the best placement for the bin boundaries (steps 2 and 4 below). This is repeated for every possible number of boundaries that can fit in the span of each group. In order to account for the minimum bin‑size constraint, once a possible set of boundaries has been converged upon by the k‑means algorithm, each mean is adjusted to insure it is at least the minimum distance from it's neighbors (steps 3 and 4 below). If this enters a cycle instead of converging on a working solution, the script will accept the adjusted boundaries without the second optimization step. Otherwise, optimization continues until a solution is reached with appropriately spaced boundaries.  
- <p align="center">  
- _This k=3 example finishes due to a cycle (steps 3‑5)._  
+_This k=3 example finishes due to a cycle (steps 3‑5)._  
 ![](README_images/bin_mapping-03.png)  
-</p>  
 5. For each group, the solution with a value of k leading to the least variance from the adjusted means are placed into a list of final boundaries. These boundaries are then used to create bins for the final binmap.
 ![](README_images/bin_mapping-04.png)
 6. Each RIL is then projected onto this bin and the results are output as a CSV. Bins are genotyped as whatever genotype represents a plurality of its contents. 
