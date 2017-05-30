@@ -1,14 +1,14 @@
 #SNPbinner
 SNPbinner is a Python 2.7 package and command line utility for the generation of genotype binmaps based on SNP genotype data across populations of recombinant inbred lines (RILs).  Analysis using SNPbinner is performed in three parts: `crosspoints`, `bins`, and `visualize`.
 
-##Table of Contents
+## Table of Contents
 [**Installation and Usage**](#installation‑and‑usage)  
 [**Commands**](#commands)  
     [crosspoints](#crosspoints)  
     [bins](#bins)  
     [visualize](#visualize)  
 
-#Installation and Usage
+# Installation and Usage
 _**SNPbinner requires Python 2.7**. Python 3 is currently not supported.   
 The only non‑standard dependency of SNPbinner is [Pillow](https://github.com/python‑pillow/Pillow), a PIL fork._
 
@@ -29,13 +29,13 @@ $ python REPO-PATH/snpbinner COMMAND [ARGS...]
 ``` 
 
 
-#Commands
+# Commands
 
-##crosspoints
+## crosspoints
 | [Description](#description) | [Usage](#usage) | [Input Format](#input‑format) | [Output Format](#output‑format) |
 |---|---|---|---|
 
-###Description
+### Description
 `crosspoints` uses genotyped SNP data to identify likely crossover points. First, the script uses a pair of hidden Markov models (HMM) to predict genotype regions along the chromosome both with (3‑state) and without (2‑state) heterozygous regions. Then, the script identifies groupings of regions which are too short (based on a minimum distance between crosspoints set by the user). After that it follows the rules below to find crosspoints. The script then outputs the crosspoints for each RIL and the genotyped regions between them to a CSV file.
 
 ---
@@ -51,7 +51,7 @@ $ python REPO-PATH/snpbinner COMMAND [ARGS...]
 3. If neither the first or last too‑short region is neighboring a heterozygous region, the shortest of those two regions will be assigned to the same genotype as its neighbor. This repeats until the group is empty.
 ![](README_images/crosspoint_selection-01.png)
 
-###Usage
+### Usage
 
 Running the `crosspoints` command requires an input path, output path, and a minimum size argument. There are also three optional arguments which can be found in the table below.
 
@@ -59,7 +59,7 @@ Running the `crosspoints` command requires an input path, output path, and a min
 $ snpbinner crosspoints --input PATH --output PATH (--min-length INT | --min-ratio FLOAT) [optional args]  
 ``` 
 
-#####Required Arguments
+##### Required Arguments
 |||Type|Description|
 |:-:|:-:|:-:|:--|
 |`‑i`|`‑‑input`|`PATH`| Path to a SNP TSV, multiple paths, or a glob (e.g. myGenome.chr*.tsv).|
@@ -67,7 +67,7 @@ $ snpbinner crosspoints --input PATH --output PATH (--min-length INT | --min-rat
 |`‑m`|`‑‑min‑length`|`INT`| Minimum distance between crosspoints in basepairs. Cannot be used with `min‑ratio`.|
 |`‑r`|`‑‑min‑ratio`|`FLOAT`| Minimum distance between crosspoints as a ratio. (0.01 would be 1% of the chromosome.) Cannot be used with `min‑length`.|
 
-#####Optional Arguments
+##### Optional Arguments
 |||Type|Description|
 |:-:|:-:|:-:|:--|
 |`‑c`|`‑‑cross‑count`|`FLOAT`| Used to calculate transition probability. The state transition probability is this value divided by the chromosome length. (default: 4)|
@@ -75,7 +75,7 @@ $ snpbinner crosspoints --input PATH --output PATH (--min-length INT | --min-rat
 |`‑p`|`‑‑homogeneity`|`FLOAT`| Used to calculate emission probabilities. For example if 0.9 is used it is predicted that a region b‑genotype would contain 90% b‑genotype. (Default: 0.9)|
 
 
-###Input Format
+### Input Format
 **[Sample input file](sample_files/crosspoints_in.tsv)**
 
 |   |Input should be formatted as a tab‑separated value (TSV) file with the following columns.|
@@ -84,7 +84,7 @@ $ snpbinner crosspoints --input PATH --output PATH (--min-length INT | --min-rat
 |1|The position of the marker in base pairs from the start of the chromosome.|
 |2+|RIL ID (header) and the called genotype of the RIL at each position.|
 
-###Output Format
+### Output Format
 **[Sample output file](sample_files/crosspoints_out.tsv)**
 
 |   |Output is formatted as a comma‑separated value (CSV) file with the following columns.|
@@ -93,11 +93,11 @@ $ snpbinner crosspoints --input PATH --output PATH (--min-length INT | --min-rat
 |Odd|Location of a crosspoint. (Empty after the chromosome ends.)|
 |Even|Genotype in between the surrounding crosspoints. (Empty after the chromosome ends.)|
 
-##bins
+## bins
 | [Description](#description‑1) | [Usage](#usage‑1) | [Input Format](#input‑format‑1) | [Output Format](#output‑format‑1) |
 |---|---|---|---|
 
-###Description
+### Description
 `bins` takes the crosspoints predicted for each RIL and combines similar crosspoint locations to create a combined map of all crossover points across the RILs at a specified resolution. It then projects the genotype regions of the RIL back onto the map and outputs the average genotype of each RIL in each bin on the map. The procedure is as follows. *It should be noted that, to insure the changes are obvious, the illustrations below are showing a map with very low resolution (bin size) and therefore there is significant loss of information. A smaller bin size would create a more accurate map.*
 
 1. The script begins by combining the crosspoints from all lines, including duplicates occurring at the same location.
@@ -113,31 +113,31 @@ $ snpbinner crosspoints --input PATH --output PATH (--min-length INT | --min-rat
 6. Each RIL is then projected onto this bin and the results are output as a CSV. Bins are genotyped as whatever genotype represents a plurality of its contents. 
 ![](README_images/bin_mapping-05.png)
 
-###Usage
+### Usage
 Running the bins command requires an input path, output path, and a minimum size argument. Optionally, a binmap ID may also be provided.
 
 ```
 $ snpbinner bins --input PATH --output PATH --min-bin-size INT [--binmap-id ID]
 ```
 
-#####Required Arguments
+##### Required Arguments
 |||Type|Description|
 |:-:|:-:|:-:|:--|
 | `‑i` | `‑‑input`| `PATH ` | Path to a crosspoints CSV, multiple paths, or a glob (e.g. myGenome.chr*.crosp.csv).|
 |`‑o`|`‑‑output`|`PATH`| Path for the output CSV when there is a single input, or for a folder when there are multiple.|
 |`‑l`|`‑‑min‑bin‑size`|`INT`| If a binmap ID is provided, a header row will be added and each column labeled with the given string. When processing multiple files, the ID is the filename.|
 
-#####Optional Arguments
+##### Optional Arguments
 |||Type|Description|
 |:-:|:-:|:-:|:--|
 |`‑n`|`‑‑binmap‑id`|`ID`| If a binmap ID is provided, a header row will be added and each column labeled with the given string.|
 
-###Input Format
+### Input Format
 `bins` uses the output from `crosspoints`.  
 For details, see the  **[`crosspoints`Output Format](#output‑format)**.
 
 
-###Output Format
+### Output Format
 **[Sample output file](sample_files/bins_out.tsv)**
 
 |   |Output is formatted as a comma‑separated value (CSV) file and has the following rows.|
@@ -148,26 +148,26 @@ For details, see the  **[`crosspoints`Output Format](#output‑format)**.
 |3| The center of each bin (in base pairs).|
 |4+| RIL ID in the first cell, then the genotypes of each bin for that RIL.|
  
-##visualize
+## visualize
 | [Description](#description‑2) | [Usage](#usage‑2) | [Input Format](#input‑format‑2) | [Output Format](#output‑format‑2) |
 |---|---|---|---|
-###Description
+### Description
 `visualize` plots the inputs and outputs of `bins` and `crosspoints`. It can be used to visually check the results of the above commands to help determine the best values for each of the parameters. It can accept three filetypes ([SNP input TSV](#input‑format), [crosspoint CSV](#output‑format), and [bin CSV](#output‑format‑1)). It then parses the files and groups the data by RIL, creating an image for each. In each row of the resulting images, regions are colored red, green, or blue, for genotype _a_, heterozygous, or genotype _b_, respectively. The binmap is represented in gray with adjacent bins alternating dark and light. The script can accept any combination or number of files for each of the different filetypes.
 
-###Example
+### Example
 ![](README_images/visualize.png)
-###Usage
+### Usage
 
 ```
 $ snpbinner visualize --out PATH [--bins PATH]... [--crosspoints PATH]... [--snps PATH]...
 ```
 
-#####Required Arguments
+##### Required Arguments
 |||Type|Description|
 |:-:|:-:|:-:|:--|
 | `‑o` | `‑‑out`| `PATH ` | Folder to which the resulting images should be saved.|
 
-#####Optional Arguments
+##### Optional Arguments
 |||Type|Description|
 |:-:|:-:|:-:|:--|
 |`‑b`|`‑‑bins`|`PATH`| [`bins` output file](#output‑format‑1) to be added to the visualization.|
