@@ -2,7 +2,7 @@
 SNPbinner is a Python 2.7 package and command line utility for the generation of genotype binmaps based on SNP genotype data across populations of recombinant inbred lines (RILs).  Analysis using SNPbinner is performed in three parts: `crosspoints`, `bins`, and `visualize`.
 
 ## Table of Contents
-[**Installation and Usage**](#installation‑and‑usage)  
+[**Installation and Usage**](#installation-and-usage)  
 [**Commands**](#commands)  
     [crosspoints](#crosspoints)  
     [bins](#bins)  
@@ -10,7 +10,7 @@ SNPbinner is a Python 2.7 package and command line utility for the generation of
 
 # Installation and Usage
 _**SNPbinner requires Python 2.7**. Python 3 is currently not supported.   
-The only non‑standard dependency of SNPbinner is [Pillow](https://github.com/python‑pillow/Pillow), a PIL fork._
+The only non‑standard dependency of SNPbinner is [Pillow](https://github.com/python-pillow/Pillow), a PIL fork._
 
 To install the SNPbinner utility, download or clone the repository and run 
 
@@ -32,7 +32,7 @@ $ python REPO-PATH/snpbinner COMMAND [ARGS...]
 # Commands
 
 ## crosspoints
-| [Description](#description) | [Usage](#usage) | [Input Format](#input‑format) | [Output Format](#output‑format) |
+| [Description](#description) | [Usage](#usage) | [Input Format](#input-format) | [Output Format](#output-format) |
 |---|---|---|---|
 
 ### Description
@@ -94,7 +94,7 @@ $ snpbinner crosspoints --input PATH --output PATH (--min-length INT | --min-rat
 |Even|Genotype in between the surrounding crosspoints. (Empty after the chromosome ends.)|
 
 ## bins
-| [Description](#description‑1) | [Usage](#usage‑1) | [Input Format](#input‑format‑1) | [Output Format](#output‑format‑1) |
+| [Description](#description-1) | [Usage](#usage-1) | [Input Format](#input-format-1) | [Output Format](#output-format-1) |
 |---|---|---|---|
 
 ### Description
@@ -133,7 +133,7 @@ $ snpbinner bins --input PATH --output PATH --min-bin-size INT [--binmap-id ID]
 
 ### Input Format
 `bins` uses the output from `crosspoints`.  
-For details, see the  **[`crosspoints`Output Format](#output‑format)**.
+For details, see the  **[`crosspoints`Output Format](#output-format)**.
 
 
 ### Output Format
@@ -148,10 +148,10 @@ For details, see the  **[`crosspoints`Output Format](#output‑format)**.
 |4+| RIL ID in the first cell, then the genotypes of each bin for that RIL.|
  
 ## visualize
-| [Description](#description‑2) | [Usage](#usage‑2) | [Input Format](#input‑format‑2) | [Output Format](#output‑format‑2) |
+| [Description](#description-2) | [Usage](#usage-2) | [Input Format](#input-format-2) | [Output Format](#output-format-2) |
 |---|---|---|---|
 ### Description
-`visualize` plots the inputs and outputs of `bins` and `crosspoints`. It can be used to visually check the results of the above commands to help determine the best values for each of the parameters. It can accept three filetypes ([SNP input TSV](#input‑format), [crosspoint CSV](#output‑format), and [bin CSV](#output‑format‑1)). It then parses the files and groups the data by RIL, creating an image for each. In each row of the resulting images, regions are colored red, green, or blue, for genotype _a_, heterozygous, or genotype _b_, respectively. The binmap is represented in gray with adjacent bins alternating dark and light. The script can accept any combination or number of files for each of the different filetypes.
+`visualize` plots the inputs and outputs of `bins` and `crosspoints`. It can be used to visually check the results of the above commands to help determine the best values for each of the parameters. It can accept three filetypes ([SNP input TSV](#input-format), [crosspoint CSV](#output-format), and [bin CSV](#output-format-1)). It then parses the files and groups the data by RIL, creating an image for each. In each row of the resulting images, regions are colored red, green, or blue, for genotype _a_, heterozygous, or genotype _b_, respectively. The binmap is represented in gray with adjacent bins alternating dark and light. The script can accept any combination or number of files for each of the different filetypes.
 
 ### Example
 ![](README_images/visualize.png)
@@ -169,9 +169,9 @@ $ snpbinner visualize --out PATH [--bins PATH]... [--crosspoints PATH]... [--snp
 ##### Optional Arguments
 |||Type|Description|
 |:-:|:-:|:-:|:--|
-|`‑b`|`‑‑bins`|`PATH`| [`bins` output file](#output‑format‑1) to be added to the visualization.|
-|`‑c`|`‑‑crosspoints`|`PATH`| [`crosspoints` output file](#output‑format) to be added to the visualization.|
-|`‑s`|`‑‑snps`|`PATH`| SNP ([`crosspoints` input file](#input‑format)) file to be added to the visualization.|
+|`‑b`|`‑‑bins`|`PATH`| [`bins` output file](#output-format-1) to be added to the visualization.|
+|`‑c`|`‑‑crosspoints`|`PATH`| [`crosspoints` output file](#output-format) to be added to the visualization.|
+|`‑s`|`‑‑snps`|`PATH`| SNP ([`crosspoints` input file](#input-format)) file to be added to the visualization.|
 
 
 
