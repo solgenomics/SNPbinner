@@ -313,7 +313,7 @@ def _read_column(filename, col, filter=True):
 def _get_file_stats(filename):
     '''Counts coulumns[-1 header](individual_count), rows[-1 header](snp_count), and returns the last row header (last_index) from a TSV.'''
     individual_count = 0
-    print filename
+    print (filename)
     with open(filename, "r") as f:
         title_line = ""
         while title_line.strip()=="" or title_line.startswith("#"):

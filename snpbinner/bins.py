@@ -46,7 +46,7 @@ def bins(input_path,output_path,min_bin_size,binmap_id=False):
             if not cps[i] in cp_loc_count: cp_loc_count[cps[i]] = 0
             cp_loc_count[cps[i]] += 1
     all_cp = sorted(cp_loc_count.keys())
-    print all_cp
+    print (all_cp)
 
     # partition all cp into groups where the distance between each consecutive cp is less than min_bin_size
     crosspoint_groups = [[all_cp[0]]]
@@ -57,7 +57,7 @@ def bins(input_path,output_path,min_bin_size,binmap_id=False):
         else:
             crosspoint_groups.append([all_cp[i]])
         i+=1
-    print crosspoint_groups
+    print (crosspoint_groups)
 
     bin_bounds = [] #Create a list for storing the bin bounds
     crosspoint_groups.reverse() #Moving backwards through the discovered groups
@@ -68,15 +68,15 @@ def bins(input_path,output_path,min_bin_size,binmap_id=False):
         group_len = group[-1]-group[0]
         expanded_group = [cp for cp in group for num in range(cp_loc_count[cp] if cp_loc_count[cp]!=float('inf') else 1)]
 
-        print "\n\n"+("="*80)
+        print ("\n\n"+("="*80))
         print ("%s crosspoints, start=%s, end=%s"%(len(expanded_group),group[0],group[-1]))
-        print "."*80
+        print ("."*80)
 
         #if there is only one cp in the group, simply use that as the one representitive boundary
         if group_len==0:
-            print "\nN=1"
+            print ("\nN=1")
             bin_bounds.append(group[0])
-            print "F", bin_bounds[-1]
+            print ("F", bin_bounds[-1])
             continue
 
         #Calculate the maximum number of new boundaries that could fit from the first to last crosspoint of the group
@@ -84,18 +84,18 @@ def bins(input_path,output_path,min_bin_size,binmap_id=False):
 
         #if it is less than two, simply average the crosspoints for the best fitting boundary
         if max_new_cp<2:
-            print "\nN=1"
-            print "g",_bin_bound_visualize(expanded_group,group[0],group[-1])
+            print ("\nN=1")
+            print ("g",_bin_bound_visualize(expanded_group,group[0],group[-1]))
             bin_bounds.append(_crosspoint_avg(cp_loc_count,group,chrom_len))
-            print "f",_bin_bound_visualize(bin_bounds[-1:],group[0],group[-1],aura=min_bin_size)
+            print ("f",_bin_bound_visualize(bin_bounds[-1:],group[0],group[-1],aura=min_bin_size))
             continue
 
         #For each possible number of boundaries, predict the locations using k-means and the sum of the variance between each crosspoint to the closest boundary
         solution_list = []
         for cp_count in range(max_new_cp,0,-1):
 
-            print "\n"+("N=%s"%cp_count)+"\n"
-            print "g",_bin_bound_visualize(expanded_group,group[0],group[-1])
+            print ("\n"+("N=%s"%cp_count)+"\n")
+            print ("g",_bin_bound_visualize(expanded_group,group[0],group[-1]))
 
             #initilize the k-means psuedo-centroids (they are not true centroids once adjusted for minimum distance) to be evenly spaced within the group
             start_cp_dist = group_len/float(cp_count)
@@ -111,7 +111,7 @@ def bins(input_path,output_path,min_bin_size,binmap_id=False):
                 while nearest+1<len(km_points) and abs(cp-km_points[nearest+1]) < abs(cp-km_points[nearest]):
                     nearest+=1
                 km_groups[nearest].append(cp)
-            print "u",_bin_bound_visualize(km_points,group[0],group[-1],aura=min_bin_size)
+            print ("u",_bin_bound_visualize(km_points,group[0],group[-1],aura=min_bin_size))
 
             #Now that the cps have been assigned to km_groups (groups with a common closest centroid), perform k-means optimization!
             memo = set() #stores each visited state so that minima cycles can be detected
@@ -168,18 +168,18 @@ def bins(input_path,output_path,min_bin_size,binmap_id=False):
                 #if we have been here before, we are done!
                 if id_tuple in memo:
                         adjustment_needed = False
-                        print "Done."
+                        print ("Done.")
                 else:
                     memo.add(id_tuple)
                     if overlap_adjustment_performed: 
                         change="ovr"
                     else:
                         change="adj"
-                print change,_bin_bound_visualize(km_points,group[0],group[-1],aura=min_bin_size)
+                print (change,_bin_bound_visualize(km_points,group[0],group[-1],aura=min_bin_size))
 
 
-            print "f",_bin_bound_visualize(km_points,group[0],group[-1],aura=min_bin_size)
-            print "g",_bin_bound_visualize(expanded_group,group[0],group[-1])
+            print ("f",_bin_bound_visualize(km_points,group[0],group[-1],aura=min_bin_size))
+            print ("g",_bin_bound_visualize(expanded_group,group[0],group[-1]))
 
             #calculate sum of variance from closest centroids
             dists = [[]]
@@ -190,7 +190,7 @@ def bins(input_path,output_path,min_bin_size,binmap_id=False):
                     dists.append([])
                 dists[-1].append(abs(cp-km_points[nearest]))
             average_average_group_dist = sum(sum(ds)/float(len(ds)) for ds in dists)
-            print "S",average_average_group_dist
+            print ("S",average_average_group_dist)
 
             #add the solution to the list of possibilities
             solution_list.append((average_average_group_dist,km_points))
@@ -202,7 +202,7 @@ def bins(input_path,output_path,min_bin_size,binmap_id=False):
 
     #sort the determined bounds
     bin_bounds.sort()
-    print "\nBin Bounds:", bin_bounds
+    print ("\nBin Bounds:", bin_bounds)
     
     #Using the determined bounds, genotype each bin across RILs. Bins are genotyped as whichever genotype occupies the most 'area' in the bin.
     bin_genotypes = OrderedDict()
@@ -238,7 +238,7 @@ def bins(input_path,output_path,min_bin_size,binmap_id=False):
     #Remove any adjacent bins that are identical across all lines.
     for i in range(len(bin_centers)-1,0,-1):
         if all(bin_genotypes[line][i-1]==bin_genotypes[line][i] for line in bin_genotypes):
-            print "Combined Identical Bins.", bin_bounds[i-1],">",bin_bounds[i],"<",bin_bounds[i+1]
+            print ("Combined Identical Bins.", bin_bounds[i-1],">",bin_bounds[i],"<",bin_bounds[i+1])
             del bin_centers[i]
             del bin_bounds[i]
             bin_centers[i-1] = (bin_bounds[i-1]+bin_bounds[i])/2
