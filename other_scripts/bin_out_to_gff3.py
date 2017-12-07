@@ -52,7 +52,7 @@ with args.bin_file.open() as input_csv, args.out.open("w") as output_gff:
         print(binGenotypes)
         for binNum,genotype in enumerate(binGenotypes):
             type = "genobin_"+genotype
-            start = bin_starts[binNum]
+            start = bin_starts[binNum]+1
             end = bin_ends[binNum]
             attributes = attr_template.format(ril=ril,
                                               num=binNum,
