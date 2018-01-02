@@ -124,7 +124,7 @@ $ snpbinner bins --input PATH --output PATH --min-bin-size INT [--binmap-id ID]
 |:-:|:-:|:-:|:--|
 | `‑i` | `‑‑input`| `PATH ` | Path to a crosspoints CSV, multiple paths, or a glob (e.g. myGenome.chr*.crosp.csv).|
 |`‑o`|`‑‑output`|`PATH`| Path for the output CSV when there is a single input, or for a folder when there are multiple.|
-|`‑l`|`‑‑min‑bin‑size`|`INT`| Sets the minimum size (in bp) of each genotype bin.|
+|`‑l`|`‑‑min‑bin‑size`|`INT`| Sets the minimum size (in bp) of each bin.|
 
 ##### Optional Arguments
 |||Type|Description|
