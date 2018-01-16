@@ -1,5 +1,6 @@
 '''Uses genotyped SNP data to identify likely crossover points. (See README for more information)'''
 from math import log
+import warnings
 import os
 
 def _crosspoints_batcher(input_path,output_path,predicted_homogeneity,predicted_cross_count,chrom_len,min_state_length=None,min_state_ratio=None):
@@ -73,6 +74,10 @@ def crosspoints(input_path,output_path,predicted_homogeneity,predicted_cross_cou
     for i in range(0,individual_count):
         snplist,name = _read_column(input_path,i)
         # get the crosspoints
+        print (name)
+        if len(snplist) < 1:
+            warnings.warn("HMM cannot be used on an empty data set, skippinng this line.", UserWarning, stacklevel=2)
+            continue
         cp = _find_crosspoints(
             snplist          = snplist,
             min_state_length = min_state_length,
@@ -81,7 +86,6 @@ def crosspoints(input_path,output_path,predicted_homogeneity,predicted_cross_cou
             hmm_all          = hmm_all)
         with open(output_path,"a") as outfile:
             outfile.write(",".join([name]+[str(n) for n in cp])+",\n")
-        print (name)
 
 def _find_crosspoints(snplist, min_state_length, chrom_length, hmm_nohet, hmm_all):
     '''Identifies crosspoints using two _HMMs.'''
@@ -252,7 +256,9 @@ class _HMM(object):
         trace_graph = {}
 
         obs_points = [snp for snp in all_obs_points if snp[1] in self.observable]
-
+        if len(obs_points) < 1:
+            warnings.warn("HMM defaulting to whole chromosome 'h' due to 1) 'h' OR 2) unknown observation type across full chromosome. Check your input file. This is only a warning, the program will continue workinng as expected.", UserWarning, stacklevel=2)
+            return [0,"h",all_obs_points[-1][0]]
         chrom_size = obs_points[-1][0]-obs_points[0][0]
 
         enum_states = list(enumerate(self.states))
@@ -288,7 +294,7 @@ class _HMM(object):
         for crosspoint in bp:
             crosspoint_list.append(obs_points[crosspoint][0])
             crosspoint_list.append(state_dets[crosspoint])
-        crosspoint_list.append(obs_points[-1][0])
+        crosspoint_list.append(all_obs_points[-1][0])
 
         return crosspoint_list
 
