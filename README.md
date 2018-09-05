@@ -40,15 +40,15 @@ $ python REPO-PATH/snpbinner COMMAND [ARGS...]
 
 ---
 
-1. If a group of too‑short regions is long enough to be its own acceptably‑long genotype region, it will be treated as such and assigned the most likely genotype using the 3‑state HMM.
+1. If a group of alternating too‑short regions is long enough to be its own acceptably‑long genotype region, it will be treated as such and assigned the most likely genotype using the 3‑state HMM.
 ![](README_images/crosspoint_selection-04.png)
-1. If a group of too‑short regions is surrounded by regions of the same genotype, all regions within that group are assigned the surrounding genotype.
+2. If a group of alternating too‑short regions is surrounded by regions of the same genotype, all regions within that group are assigned the surrounding genotype.
 ![](README_images/crosspoint_selection-03.png)
-1. If a too‑short region has been genotyped as heterozygous by the 3‑state HMM, that section is replaced by the regions identified by the 2‑sate HMM. 
+3. If a too‑short region has been genotyped as heterozygous by the 3‑state HMM, that section is replaced by the regions identified by the 2‑sate HMM. 
 ![](README_images/crosspoint_selection-05.png)
-2. If the first or last too‑short region is neighboring an acceptably‑long heterozygous region, the whole grouping will be assigned the heterozygous genotype. 
+4. If the first or last too‑short region is neighboring an acceptably‑long heterozygous region, the whole grouping will be assigned the heterozygous genotype. 
 ![](README_images/crosspoint_selection-02.png)
-3. If neither the first or last too‑short region is neighboring a heterozygous region, the shortest of those two regions will be assigned to the same genotype as its neighbor. This repeats until the group is empty.
+5. If a group of alternating too-short regions is bounded by two homozygous regions, the leftmost or rightmost too-short region (whichever is shortest) will be merged with it's bounding homozygous region. This repeats until the group is empty.
 ![](README_images/crosspoint_selection-01.png)
 
 ### Usage
@@ -70,9 +70,9 @@ $ snpbinner crosspoints --input PATH --output PATH (--min-length INT | --min-rat
 ##### Optional Arguments
 |||Type|Description|
 |:-:|:-:|:-:|:--|
-|`‑c`|`‑‑cross‑count`|`FLOAT`| Used to calculate transition probability. The state transition probability is this value divided by the chromosome length. (default: 4)|
+|`‑c`|`‑‑cross‑count`|`FLOAT`| Used to calculate transition probability. The state transition probability is this value divided by the chromosome length. (default: 4) <img src="https://latex.codecogs.com/gif.latex?\inline&space;c&space;=&space;\text{crossCount}/\text{chromLen}" title="c = \text{crossCount}/\text{chromLen}" /> <img src="https://latex.codecogs.com/gif.latex?\inline&space;a&space;=&space;1-c,\&space;transition(\text{non-heterogenous})&space;=&space;\begin{bmatrix}&space;a&space;&&space;c&space;\\&space;c&space;&&space;a&space;\end{bmatrix}" title="a = 1-c, transition(\text{non-heterogenous}) = \begin{bmatrix} a & c \\ c & a \end{bmatrix}" />  <img src="https://latex.codecogs.com/gif.latex?\inline&space;a&space;=&space;1-c,\&space;e&space;=&space;c/2,\&space;transition(\text{heterogenous})&space;=&space;\begin{bmatrix}&space;a&space;&&space;e&space;&&space;e\\&space;e&space;&&space;a&space;&&space;e\\&space;e&space;&&space;e&space;&&space;a&space;\end{bmatrix}" title="a = 1-c,\ e = c/2,\ transition(\text{heterogenous}) = \begin{bmatrix} a & e & e\\ e & a & e\\ e & e & a \end{bmatrix}" /> |
 |`‑l`|`‑‑chrom‑len`|`INT`| The length of the chromosome/scaffold which the SNPs are on. If no length is provided (or multiple file are being processed), the last SNP is considered to be the last site on the chromosome.|
-|`‑p`|`‑‑homogeneity`|`FLOAT`| Used to calculate emission probabilities. For example if 0.9 is used it is predicted that a region b‑genotype would contain 90% b‑genotype. (Default: 0.9)|
+|`‑p`|`‑‑homogeneity`|`FLOAT`| Used to calculate emission probabilities. For example if 0.9 is used it is predicted that a region b‑genotype would contain 90% b‑genotype. (Default: 0.9) <img src="https://latex.codecogs.com/gif.latex?\inline&space;emission(\text{non-heterogeneous})&space;=&space;\begin{bmatrix}&space;\text{homogeneity}&space;&&space;1-\text{homogeneity}&space;\\&space;1-\text{homogeneity}&space;&&space;\text{homogeneity}&space;\end{bmatrix}" title="emission(\text{non-heterogeneous}) = \begin{bmatrix} \text{homogeneity} & 1-\text{homogeneity} \\ 1-\text{homogeneity} & \text{homogeneity} \end{bmatrix}" /> <img src="https://latex.codecogs.com/gif.latex?\inline&space;e&space;=&space;1-&space;homogeneity,\&space;A&space;=&space;\begin{bmatrix}&space;homogeneity&space;&&space;e&space;&&space;e\\&space;e&space;&&space;homogeneity&space;&&space;e\\&space;0.5&space;&&space;0.5&space;&&space;homogeneity&space;\end{bmatrix}" title="e = 1- homogeneity,\ A = \begin{bmatrix} homogeneity & e & e\\ e & homogeneity & e\\ 0.5 & 0.5 & homogeneity \end{bmatrix}" /> <img src="https://latex.codecogs.com/gif.latex?\inline&space;emission(\text{heterogeneous})&space;=&space;A&space;\oslash&space;\begin{bmatrix}&space;sum(A_{1*}),&space;...&space;\\&space;sum(A_{2*}),&space;...&space;\\&space;sum(A_{3*}),&space;...&space;\end{bmatrix}" title="emission(\text{heterogeneous}) = A \oslash \begin{bmatrix} sum(A_{1*}), ... \\ sum(A_{2*}), ... \\ sum(A_{3*}), ... \end{bmatrix}" />|
 
 
 ### Input Format
@@ -172,7 +172,3 @@ $ snpbinner visualize --out PATH [--bins PATH]... [--crosspoints PATH]... [--snp
 |`‑b`|`‑‑bins`|`PATH`| [`bins` output file](#output-format-1) to be added to the visualization.|
 |`‑c`|`‑‑crosspoints`|`PATH`| [`crosspoints` output file](#output-format) to be added to the visualization.|
 |`‑s`|`‑‑snps`|`PATH`| SNP ([`crosspoints` input file](#input-format)) file to be added to the visualization.|
-
-
-
-
