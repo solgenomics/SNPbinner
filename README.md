@@ -4,7 +4,7 @@ SNPbinner is a Python 2.7 package and command line utility for the generation of
 ## Citing
 SNPbinner can be cited as:
 
-Gonda, I.; Ashrafi, H.; Lyon, D.A.; Strickler, S.R.; Hulse-Kemp, A.M.; Ma, Q.; Sun, H.; Stoffel, K.; Powell, A.F.; Futrell, S.; et al. [A GBS-based high-density genetic map of a tomato RIL population, facilitating high-resolution QTL mapping and candidate gene identification](https://dl.sciencesocieties.org/publications/tpg/first-look/pdf/plantgenome2018.02.0010.pdf). Plant Genome 2018, in press. 
+Gonda, I., H. Ashrafi, D.A. Lyon, S.R. Strickler, A.M. Hulse-Kemp, Q. Ma, H. Sun, K. Stoffel, A.F. Powell, S. Futrell, T.W. Thannhauser, Z. Fei, A.E. Van Deynze, L.A. Mueller, J.J. Giovannoni, and M.R. Foolad. 2019. Sequencing-based bin map construction of a tomato mapping population, facilitating high-resolution quantitative trait loci detection. Plant Genome 12:180010. doi:10.3835/plantgenome2018.02.0010
 
 ## Table of Contents
 [**Installation and Usage**](#installation-and-usage)  
